@@ -1,0 +1,16 @@
+{
+  "name": "@wwaaijer/cc-socket-server",
+  "version": "0.0.1",
+  "description": "A proof of concept command and control server for ComputerCraft computers in Minecraft",
+  "repository": "https://github.com/wwaaijer/cc-socket-server.git",
+  "keywords": [
+    "computercraft",
+    "cc: tweaked",
+    "minecraft"
+  ],
+  "main": "src/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^7.4.5"
+  }
+}
