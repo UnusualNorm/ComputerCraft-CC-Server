@@ -1,7 +1,17 @@
-# @unusualnorm/computercraft-cc-server
+# @unnusualnorm/computercraft-cc-server
+
 
 A Node.js package providing a command and control server for ComputerCraft computers in Minecraft.
 Allowing control over these in game computers (like turtles!) with Node.js using WebSockets.
+
+---
+## Disclaimer
+This project is currently NOT uploaded to NPM, please disreguard below instructions and manually install it using git
+```
+npm install git+https://github.com/UnusualNorm/ComputerCraft-CC-Server
+```
+
+---
 
 This project is meant to be used with the `CC:Tweaked` Minecraft mod:
 
@@ -35,13 +45,13 @@ This package provides/is going to provide:
 Install the package:
 
 ```
-npm install @unusualnorm/computercraft-cc-server
+npm install @unnusualnorm/computercraft-cc-server
 ```
 
 Create a file, `server.js`, with the content:
 
 ```js
-const { Server as CCServer } = require('@unusualnorm/computercraft-cc-server');
+const { Server as CCServer } = require('@unnusualnorm/computercraft-cc-server');
 
 const port = 3000;
 const server = new CCServer();

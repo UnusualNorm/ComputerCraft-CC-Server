@@ -18,7 +18,8 @@
     "lint": "prettier -c -w . && eslint --fix",
     "build": "yarn build:clean && yarn build:copy && tsc",
     "build:clean": "rimraf dist/ lib/",
-    "build:copy": "copyfiles -u 1 src/**/*.lua dist/"
+    "build:copy": "copyfiles -u 1 src/**/*.lua dist/",
+    "prepare": "npm run build"
   },
   "license": "MIT",
   "dependencies": {
