@@ -51,10 +51,10 @@ npm install @unnusualnorm/computercraft-cc-server
 Create a file, `server.js`, with the content:
 
 ```js
-const { Server as CCServer } = require('@unnusualnorm/computercraft-cc-server');
+const { Server } = require('@unnusualnorm/computercraft-cc-server');
 
 const port = 3000;
-const server = new CCServer();
+const server = new Server();
 
 server.on('connection', async (computer) => {
   await computer.init;
