@@ -3,7 +3,7 @@ export type JsonTypes = string | number | object | JsonTypes[] | boolean | null;
 export const paramify = (param: JsonTypes) => {
   if (typeof param == 'string') param = JSON.stringify(param);
   return param;
-}
+};
 
 export const toParams = (...data: JsonTypes[]) => {
   let params = '';

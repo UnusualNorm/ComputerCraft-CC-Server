@@ -33,7 +33,7 @@ export default async function testBase(computer: Computers.Base) {
 
   // WRITE TESTING
   const writeString = 'Hello\nWorld!';
-  const writeLength = writeString.split('\n').length-1;
+  const writeLength = writeString.split('\n').length - 1;
   const writeOut = await computer.write(writeString).catch(console.error);
 
   if (writeOut == writeLength) console.log('Passed write test!');
