@@ -17,7 +17,7 @@ function attachClientSource(server: http.Server, path = '/') {
   });
 }
 
-const sourcePath = path.join(__dirname, 'Client.lua');
+const sourcePath = path.join(__dirname, '../Client.lua');
 const clientSource = await fs.readFile(sourcePath, { encoding: 'utf-8' });
 
 async function buildClientSource(host: string) {

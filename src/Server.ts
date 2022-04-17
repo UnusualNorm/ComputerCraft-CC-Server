@@ -1,11 +1,11 @@
 import http from 'http';
-import { attachClientSource } from './SourceServer.js';
-import SocketServer from './SocketServer.js';
-import Computer from './Computer.js';
+import { attachClientSource } from './Servers/Source.js';
+import SocketServer from './Servers/Socket.js';
+import { Base } from './Computers.js';
 import EventEmitter from 'events';
 
 interface Server {
-  on: (event: 'connection', listener: (computer: Computer) => unknown) => this;
+  on: (event: 'connection', listener: (computer: Base) => unknown) => this;
 }
 class Server extends EventEmitter {
   httpServer: http.Server;

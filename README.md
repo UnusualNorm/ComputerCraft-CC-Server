@@ -41,17 +41,18 @@ npm install @unusualnorm/computercraft-cc-server
 Create a file, `server.js`, with the content:
 
 ```js
-const ComputerCraft = require('@unusualnorm/computercraft-cc-server');
+const { Server as CCServer } = require('@unusualnorm/computercraft-cc-server');
 
 const port = 3000;
-const CCServer = new ComputerCraft.Server();
+const server = new CCServer();
 
-CCServer.on('connect', async (computer) => {
+server.on('connection', async (computer) => {
+  await computer.init;
   await computer.print('Hello World!');
   await computer.close();
 });
 
-CCServer.listen(port);
+server.listen(port);
 console.log(`Listening on port ${port}!`);
 ```
 

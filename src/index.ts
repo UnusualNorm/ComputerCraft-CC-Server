@@ -1,6 +1,7 @@
 import Server from './Server.js';
-import Computer from './Computer.js';
-import SocketServer from './SocketServer.js';
-import * as SourceServer from './SourceServer.js';
+import * as Computers from './Computers.js';
+import SocketServer from './Servers/Socket.js';
+import * as SourceServer from './Servers/Source.js';
+import * as Globals from './Globals.js';
 
-export default { Server, Computer, SocketServer, SourceServer };
+export { Server, Computers, SocketServer, SourceServer, Globals };
