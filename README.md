@@ -10,9 +10,6 @@ This project is currently NOT uploaded to NPM, please disreguard "Install the pa
 ```
 npm install git+https://github.com/UnusualNorm/ComputerCraft-CC-Server
 ```
-Make sure to replace all instances of "@unnusualnorm/computercraft-cc-server" with "@unusualnorm/computercraft-cc-server"
-
-(replace the incorrect spellings of "unnusual" to the correct spelling of "unusual")
 
 ---
 
