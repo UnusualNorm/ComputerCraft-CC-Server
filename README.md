@@ -6,10 +6,13 @@ Allowing control over these in game computers (like turtles!) with Node.js using
 
 ---
 ## Disclaimer
-This project is currently NOT uploaded to NPM, please disreguard below instructions and manually install it using git
+This project is currently NOT uploaded to NPM, please disreguard "Install the package" step and manually install it using git
 ```
 npm install git+https://github.com/UnusualNorm/ComputerCraft-CC-Server
 ```
+Make sure to replace all instances of "@unnusualnorm/computercraft-cc-server" with "@unusualnorm/computercraft-cc-server"
+
+(replace the incorrect spellings of "unnusual" to the correct spelling of "unusual")
 
 ---
 
@@ -33,10 +36,12 @@ This package provides/is going to provide:
 - Callback support for parameters
 - Add more cached details
 
-## Known Bugs
+## Known Issues
 
 - If the server disconnects during an operation, the client crashes
 - Arrays and objects are not supported for print() and printError()
+- Colors/Colours API is inneficiently requesting operations through the computer
+- computer.close() is broken
 
 # Usage
 
