@@ -1,4 +1,4 @@
-import Colors from './Globals/Colors.js';
-import Colours from './Globals/Colours.js';
+import Colors from './Globals/Colors';
+import Colours from './Globals/Colours';
 
 export { Colors, Colours };

@@ -1,3 +1,3 @@
-import Base from './Computers/Base.js';
+import Base from './Computers/Base';
 
 export { Base };

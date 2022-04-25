@@ -1,5 +1,5 @@
-import { Server as CCServer } from '../src/index.js';
-import testBase from './Base.js';
+import { Server as CCServer } from '../src/index';
+import testBase from './Base';
 
 const port = 3000;
 const server = new CCServer();

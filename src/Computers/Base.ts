@@ -1,10 +1,7 @@
-import { JsonTypes, paramify, toParams } from '../lua.js';
+import { JsonTypes, paramify, toParams } from '../lua';
 import EventEmitter from 'events';
+import BaseEvents from './BaseEvents';
 import ws from 'ws';
-
-interface BaseEvents {
-  on: (event: 'close', listener: () => unknown) => this;
-}
 
 class Base extends EventEmitter implements BaseEvents {
   socket: ws.WebSocket;
@@ -40,11 +37,29 @@ class Base extends EventEmitter implements BaseEvents {
       const message = rawMessage.toString();
       const [nonce, ...data]: [string, ...JsonTypes[]] = JSON.parse(message);
 
-      // Run and delete the callback
+      // Run the callback
       if (!this.#nonces.has(nonce)) return;
       this.#nonces.get(nonce)(...data);
-      this.#nonces.delete(nonce);
+
+      // Delete the callback if it is not reserved
+      if (!nonce.startsWith('!')) this.#nonces.delete(nonce);
     });
+
+    // Event handler
+    this.#nonces.set(
+      '!event',
+      async (
+        eventName: string,
+        ...data: [JsonTypes, JsonTypes, JsonTypes, JsonTypes, JsonTypes]
+      ) => {
+        if (!eventName) {
+          // No event name... Either "redstone" or "turtle_inventory"
+          return;
+        }
+
+        this.emit(eventName, data);
+      }
+    );
 
     socket.once('close', () => this.emit('close'));
   }
@@ -184,7 +199,7 @@ class Base extends EventEmitter implements BaseEvents {
    */
   async read(
     replaceChar?: string,
-    history?: any[],
+    history?: JsonTypes[],
     completeFn?: (partial: string) => string[],
     defaultText?: string
   ): Promise<string> {

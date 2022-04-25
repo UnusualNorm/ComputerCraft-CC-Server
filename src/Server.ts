@@ -1,7 +1,7 @@
 import http from 'http';
-import { attachClientSource } from './Servers/Source.js';
-import SocketServer from './Servers/Socket.js';
-import { Base } from './Computers.js';
+import { attachClientSource } from './Servers/Source';
+import SocketServer from './Servers/Socket';
+import { Base } from './Computers';
 import EventEmitter from 'events';
 
 interface Server {

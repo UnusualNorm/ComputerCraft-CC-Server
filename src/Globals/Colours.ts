@@ -1,4 +1,4 @@
-import Colouors from './Colouors.js';
+import Colouors from './Colouors';
 
 /** @description Colours for the lovers of british spelling. */
 export default class Colours extends Colouors {

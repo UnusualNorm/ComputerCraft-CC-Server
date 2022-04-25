@@ -1,5 +1,31 @@
-import { Base } from '../Computers.js';
-import { toParams } from '../lua.js';
+import { Base } from '../Computers';
+import { toParams } from '../lua';
+
+interface Colouors {
+  /**
+   * @deprecated Use packRGB or unpackRGB directly.
+   * @description Either calls colors.packRGB or colors.unpackRGB, depending on how many arguments it receives.
+   * @param r number The red channel, as an argument to colors.packRGB.
+   * @param g number The green channel, as an argument to colors.packRGB.
+   * @param b number The blue channel, as an argument to colors.packRGB.
+   * @returns The combined hexadecimal colour, as returned by colors.packRGB.
+   * @example await colors.rgb8(0xb23399); // => 0.7, 0.2, 0.6
+   * @example await colors.rgb8(0.7, 0.2, 0.6); // => 0xb23399
+   */
+  rgb8(r: number, g: number, b: number): Promise<number>;
+
+  /**
+   * @deprecated Use packRGB or unpackRGB directly.
+   * @description Either calls colors.packRGB or colors.unpackRGB, depending on how many arguments it receives.
+   * @param rgb The combined hexadecimal color, as an argument to colors.unpackRGB.
+   * @returns The red channel, as returned by colors.unpackRGB
+   * @returns The green channel, as returned by colors.unpackRGB
+   * @returns The blue channel, as returned by colors.unpackRGB
+   * @example await colors.rgb8(0xb23399); // => 0.7, 0.2, 0.6
+   * @example await colors.rgb8(0.7, 0.2, 0.6); // => 0xb23399
+   */
+  rgb8(rgb: number): Promise<[number, number, number]>;
+}
 
 /**
  * @description
@@ -14,7 +40,7 @@ import { toParams } from '../lua.js';
  * Grayscale colors are calculated by taking the average of the three components, i.e. (red + green + blue) / 3.
  * @todo Convert to native Javascript.
  */
-export default class Colors {
+class Colouors {
   private computer: Base;
 
   constructor(Computer: Base) {
@@ -125,26 +151,22 @@ export default class Colors {
     return out[0];
   }
 
-  // TODO: Change JSDoc based on parameter inputs
   /**
    * @deprecated Use packRGB or unpackRGB directly.
    * @description Either calls colors.packRGB or colors.unpackRGB, depending on how many arguments it receives.
-   * @param r number The red channel, as an argument to colors.packRGB.
-   * @param g number The green channel, as an argument to colors.packRGB.
-   * @param b number The blue channel, as an argument to colors.packRGB.
-   * @param r The combined hexadecimal color, as an argument to colors.unpackRGB.
-   * @returns The combined hexadecimal colour, as returned by colors.packRGB.
-   * @returns The red channel, as returned by colors.unpackRGB
-   * @returns The green channel, as returned by colors.unpackRGB
-   * @returns The blue channel, as returned by colors.unpackRGB
    * @example await colors.rgb8(0xb23399); // => 0.7, 0.2, 0.6
    * @example await colors.rgb8(0.7, 0.2, 0.6); // => 0xb23399
    */
-  async rgb8(r: number, g?: number, b?: number): Promise<number> {
+  async rgb8(
+    r: number,
+    g?: number,
+    b?: number
+  ): Promise<number | [number, number, number]> {
     const out = await this.computer
       .eval(`combine(${r}, ${g}, ${b}})`)
-      .then((out: [number, null]) => out);
-    return out[0];
+      .then((out: [number, number, number]) => out);
+    if (b) return out[0];
+    else return out;
   }
 
   /**
@@ -161,3 +183,5 @@ export default class Colors {
     return out[0];
   }
 }
+
+export default Colouors;

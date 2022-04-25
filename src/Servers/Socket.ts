@@ -1,6 +1,6 @@
 import { WebSocketServer as WSServer } from 'ws';
-import { Base } from '../Computers.js';
-import Server from '../Server.js';
+import { Base } from '../Computers';
+import Server from '../Server';
 
 class SocketServer {
   server: Server;

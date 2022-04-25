@@ -1,49 +1,69 @@
-print('Connecting to ' .. connectionURL)
-Socket, err = http.websocket(connectionURL)
-local function connectToSocket()
-    --repeat
-    --    Socket, err = http.websocket(connectionURL)
-    --    if not Socket then
-    --        printError(err)
-    --    else
-    --        print('WebSocket opened')
-    --    end
-    --until Socket
+Socket, SocketErr = http.websocket(connectionURL)
+
+-- Make sure all nil values in a table is json_null
+local function prepareTable(data)
+    for i, value in ipairs(data) do
+        if value == nil then
+            data[i] = textutils.json_null
+        end
+    end
+
+    return data
 end
 
-if not Socket then
-    connectToSocket()
-else
-    print('WebSocket opened')
+-- Make sure we are connected to server
+local function connectToSocket()
+    write('Connecting to ' .. connectionURL .. '... ')
+    repeat
+        Socket, SocketErr = http.websocket(connectionURL)
+        if not Socket then
+            printError(SocketErr)
+        else
+            print('Success.')
+        end
+    until Socket
 end
+
+connectToSocket()
 
 while true do
-    local type, url, rawMessage, isBinary = os.pullEvent()
-    
-    if type == "websocket_closed" and url == connectionURL then
-        print('WebSocket closed')
+    -- websocket_message event is this:
+    -- url, rawMessage, isBinary
+    local eventData = { os.pullEvent() }
+    local eventName = table.remove(eventData, 1)
+
+    if eventName == 'websocket_closed' and eventData[1] == connectionURL then
+        print('WebSocket closed...')
         connectToSocket()
-    elseif type == "websocket_message" and url == connectionURL then
-        local data = textutils.unserializeJSON(rawMessage)
-        local names = {}; setmetatable(names, {__index = _G})
+    elseif eventName == 'websocket_message' and eventData[1] == connectionURL then
+        local messageData = textutils.unserializeJSON(eventData[2])
+        local globalNames = {};
+        setmetatable(globalNames, { __index = _G })
 
         local response = nil
-        local fn, err = load(data[2],nil,'t',names)
+        local fn, fnErr = load(messageData[2], nil, 't', globalNames)
         if fn then
-            local success, a, b = pcall(fn)
+            local rawOutput = { pcall(fn) }
+            local success = table.remove(rawOutput, 1)
+            local output = prepareTable(rawOutput)
+
             if success then
-                if a == nil then
-                    a = textutils.json_null
-                end
-                response = textutils.serialiseJSON({ data[1], a, b })
+                response = textutils.serialiseJSON({ messageData[1], table.unpack(output) })
             else
-                response = textutils.serialiseJSON({ data[1], textutils.json_null, a })
+                response = textutils.serialiseJSON({ messageData[1], textutils.json_null, output[1] })
             end
         else
-            response = textutils.serialiseJSON({ data[1], textutils.json_null, err })
+            response = textutils.serialiseJSON({ messageData[1], textutils.json_null, fnErr })
         end
         -- FIXME: If server disconnects during an operation, the client crashes...
         print(response)
         Socket.send(response)
     end
+
+    if eventName == nil then
+        eventName = textutils.json_null
+    end
+    local output = prepareTable(eventData)
+
+    Socket.send(textutils.serialiseJSON({ '!event', eventName, table.unpack(output) }))
 end
