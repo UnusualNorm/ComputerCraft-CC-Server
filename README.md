@@ -4,6 +4,8 @@
 A Node.js package providing a command and control server for ComputerCraft computers in Minecraft.
 Allowing control over these in game computers (like turtles!) with Node.js using WebSockets.
 
+Thank you wwaaijer for the [base and inspiration](https://github.com/wwaaijer/cc-socket-server) for this project!
+
 ---
 ## Disclaimer
 This project is currently NOT uploaded to NPM, please disreguard "Install the package" step and manually install it using git
