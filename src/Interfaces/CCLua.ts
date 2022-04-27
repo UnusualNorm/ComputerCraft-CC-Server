@@ -1,4 +1,5 @@
 export type JsonTypes = string | number | object | JsonTypes[] | boolean | null;
+export type Side = 'top' | 'bottom' | 'left' | 'right' | 'front' | 'back';
 
 export const paramify = (param: JsonTypes) => {
   if (typeof param == 'string') param = JSON.stringify(param);

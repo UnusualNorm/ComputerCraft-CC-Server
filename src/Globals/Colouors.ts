@@ -1,7 +1,7 @@
-import { Base } from '../Computers';
-import { toParams } from '../lua';
+import Global from '../Globals';
+import { toParams } from '../Interfaces/CCLua';
 
-interface Colouors {
+interface Colouors extends Global {
   /**
    * @deprecated Use packRGB or unpackRGB directly.
    * @description Either calls colors.packRGB or colors.unpackRGB, depending on how many arguments it receives.
@@ -40,13 +40,7 @@ interface Colouors {
  * Grayscale colors are calculated by taking the average of the three components, i.e. (red + green + blue) / 3.
  * @todo Convert to native Javascript.
  */
-class Colouors {
-  private computer: Base;
-
-  constructor(Computer: Base) {
-    this.computer = Computer;
-  }
-
+class Colouors extends Global {
   /** @description Written as 0 in paint files and term.blit, has a default terminal colour of #F0F0F0. */
   readonly white = 0x1;
   /** @description Written as 1 in paint files and term.blit, has a default terminal colour of #F2B233. */
@@ -61,6 +55,10 @@ class Colouors {
   readonly lime = 0x20;
   /** @description Written as 6 in paint files and term.blit, has a default terminal colour of #F2B2CC. */
   readonly pink = 0x40;
+
+  //-------------------------------------------------------------------
+  //---- GRAY/GREY NOT DEFINED HERE, PLEASE SEE COLOR/COLOUR FILES ----
+  //-------------------------------------------------------------------
 
   /** @description Written as 9 in paint files and term.blit, has a default terminal colour of #4C99B2. */
   readonly cyan = 0x200;
@@ -87,6 +85,7 @@ class Colouors {
     const out = await this.computer
       .eval(`combine(${toParams(...colors)})`)
       .then((out: [number, null]) => out);
+
     return out[0];
   }
 
@@ -102,6 +101,7 @@ class Colouors {
     const out = await this.computer
       .eval(`subtract(${toParams(color, ...colors)})`)
       .then((out: [number, null]) => out);
+
     return out[0];
   }
 
@@ -118,6 +118,7 @@ class Colouors {
     const out = await this.computer
       .eval(`test(${toParams(colors)}, ${color})`)
       .then((out: [boolean, ...null[]]) => out);
+
     return out[0];
   }
 
@@ -133,6 +134,7 @@ class Colouors {
     const out = await this.computer
       .eval(`combine(${r}, ${g}, ${b})`)
       .then((out: [number, null]) => out);
+
     return out[0];
   }
 
@@ -148,6 +150,7 @@ class Colouors {
     const out = await this.computer
       .eval(`combine(${rgb})`)
       .then((out: [number]) => out);
+
     return out[0];
   }
 
@@ -164,8 +167,9 @@ class Colouors {
   ): Promise<number | [number, number, number]> {
     const out = await this.computer
       .eval(`combine(${r}, ${g}, ${b}})`)
-      .then((out: [number, number, number]) => out);
-    if (b) return out[0];
+      .then((out: [number] | [number, number, number]) => out);
+
+    if (out.length == 1) return out[0];
     else return out;
   }
 
@@ -180,6 +184,7 @@ class Colouors {
     const out = await this.computer
       .eval(`combine(${color})`)
       .then((out: [string, null]) => out);
+
     return out[0];
   }
 }

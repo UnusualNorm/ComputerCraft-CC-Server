@@ -27,9 +27,9 @@ end
 connectToSocket()
 
 while true do
-    -- websocket_message event is this:
+    -- websocket_message event data is:
     -- url, rawMessage, isBinary
-    local eventData = { os.pullEvent() }
+    local eventData = { os.pullEventRaw() }
     local eventName = table.remove(eventData, 1)
 
     if eventName == 'websocket_closed' and eventData[1] == connectionURL then
@@ -37,10 +37,10 @@ while true do
         connectToSocket()
     elseif eventName == 'websocket_message' and eventData[1] == connectionURL then
         local messageData = textutils.unserializeJSON(eventData[2])
-        local globalNames = {};
+        local globalNames = {}
         setmetatable(globalNames, { __index = _G })
 
-        local response = nil
+        local response = textutils.serialiseJSON({messageData[1]})
         local fn, fnErr = load(messageData[2], nil, 't', globalNames)
         if fn then
             local rawOutput = { pcall(fn) }
@@ -58,12 +58,12 @@ while true do
         -- FIXME: If server disconnects during an operation, the client crashes...
         print(response)
         Socket.send(response)
-    end
+    elseif eventName ~= 'websocket_failure' and eventName ~= 'websocket_success' then
+        if eventName == nil then
+            eventName = textutils.json_null
+        end
+        local output = prepareTable(eventData)
 
-    if eventName == nil then
-        eventName = textutils.json_null
+        Socket.send(textutils.serialiseJSON({ '!event', eventName, table.unpack(output) }))
     end
-    local output = prepareTable(eventData)
-
-    Socket.send(textutils.serialiseJSON({ '!event', eventName, table.unpack(output) }))
 end

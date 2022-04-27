@@ -1,11 +1,11 @@
 import http from 'http';
 import { attachClientSource } from './Servers/Source';
 import SocketServer from './Servers/Socket';
-import { Base } from './Computers';
+import Computer from './Computer';
 import EventEmitter from 'events';
 
 interface Server {
-  on: (event: 'connection', listener: (computer: Base) => unknown) => this;
+  on: (event: 'connection', listener: (computer: Computer) => unknown) => this;
 }
 class Server extends EventEmitter {
   httpServer: http.Server;

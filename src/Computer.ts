@@ -1,9 +1,12 @@
-import { JsonTypes, paramify, toParams } from '../lua';
+import { JsonTypes, paramify, toParams } from './Interfaces/CCLua';
 import EventEmitter from 'events';
-import BaseEvents from './BaseEvents';
+import ComputerEvents from './Interfaces/ComputerEvents';
+import Global, * as Globals from './Globals';
 import ws from 'ws';
 
-class Base extends EventEmitter implements BaseEvents {
+const GlobalsList = Object.keys(Globals);
+
+class Base extends EventEmitter implements ComputerEvents {
   socket: ws.WebSocket;
 
   /**
@@ -17,18 +20,30 @@ class Base extends EventEmitter implements BaseEvents {
   _CC_DEFAULT_SETTINGS: string;
 
   init: Promise<void>;
+
+  // Globals
+  globals = new Array<Global>();
+
   constructor(socket: ws.WebSocket) {
     super();
     this.socket = socket;
 
     this.init = (async function (self) {
-      // Get results
-      const _HOST = (await self.eval('_HOST'))[0];
-      const _CC_DEFAULT_SETTINGS = (await self.eval('_CC_DEFAULT_SETTINGS'))[0];
+      // Request global variables
+      const _HOST = self.eval('_HOST').then((out: [string]) => out);
+      const _CC_DEFAULT_SETTINGS = self
+        .eval('_CC_DEFAULT_SETTINGS')
+        .then((out: [string]) => out);
 
-      // Assign variables
-      self._HOST = String(_HOST);
-      self._CC_DEFAULT_SETTINGS = String(_CC_DEFAULT_SETTINGS);
+      // Request globals
+      const GlobalEvaluations: Promise<boolean>[] = [];
+
+      // Assign global variables
+      self._HOST = (await _HOST)[0];
+      self._CC_DEFAULT_SETTINGS = (await _CC_DEFAULT_SETTINGS)[0];
+
+      // Create global variables
+      await Promise.all(GlobalEvaluations).then().catch();
       return;
     })(this);
 
@@ -48,16 +63,13 @@ class Base extends EventEmitter implements BaseEvents {
     // Event handler
     this.#nonces.set(
       '!event',
-      async (
-        eventName: string,
-        ...data: [JsonTypes, JsonTypes, JsonTypes, JsonTypes, JsonTypes]
-      ) => {
+      async (eventName: string, ...data: JsonTypes[]) => {
         if (!eventName) {
-          // No event name... Either "redstone" or "turtle_inventory"
+          // No event name... Either "redstone" "term_resize" or "turtle_inventory"
           return;
         }
 
-        this.emit(eventName, data);
+        this.emit(eventName, ...data);
       }
     );
 

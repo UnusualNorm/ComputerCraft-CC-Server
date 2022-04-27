@@ -1,5 +1,5 @@
 import { WebSocketServer as WSServer } from 'ws';
-import { Base } from '../Computers';
+import Computer from '../Computer';
 import Server from '../Server';
 
 class SocketServer {
@@ -11,7 +11,7 @@ class SocketServer {
     this.wss = new WSServer({ server: server.httpServer });
 
     this.wss.on('connection', (socket) => {
-      const computer = new Base(socket);
+      const computer = new Computer(socket);
       server.emit('connection', computer);
     });
   }

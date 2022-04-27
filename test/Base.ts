@@ -1,5 +1,5 @@
-import { Computers } from '../src/index.js';
-import { JsonTypes } from '../src/lua.js';
+import { Computers } from '../src/index';
+import { JsonTypes } from '../src/CC';
 
 export default async function testBase(computer: Computers.Base) {
   // INIT TESTING
