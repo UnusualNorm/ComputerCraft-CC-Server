@@ -8,7 +8,8 @@ Thank you wwaaijer for the [base and inspiration](https://github.com/wwaaijer/cc
 
 ---
 ## Disclaimer
-This project is currently NOT uploaded to NPM, please disreguard "Install the package" step and manually install it using git
+This project is currently NOT uploaded to NPM because it is entirely UNFINISHED, do not use it unless you are okay with manually typing lua, or you are developing.
+If you are, please disreguard "Install the package" step and manually install it using git:
 ```
 npm install git+https://github.com/UnusualNorm/ComputerCraft-CC-Server
 ```
@@ -114,12 +115,13 @@ The first value will state if a block was detected.
 The second value will contain the block that it detected.
 
 ```js
-const [success, details] = await turtle.inspect();
+const {turtle} = computer.globals
+const {success, details} = await turtle.inspect();
 
 console.log('Inspection successful:', success);
 console.log('Inspection details:', details);
 
-await turtle.close();
+await computer.close();
 ```
 
 Output:
@@ -140,12 +142,12 @@ Inspection details: {
 Or, for when a movement command of a turtle fails like the `turtle.down()` command:
 
 ```js
-const [successful, details] = await turtle.down();
+const {success, details} = await turtle.down();
 
 console.log('Move successful:', successful);
 console.log('Move details:', details);
 
-await turtle.close();
+await computer.close();
 ```
 
 The output would be:
