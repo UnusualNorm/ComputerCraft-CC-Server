@@ -10,7 +10,8 @@ Thank you wwaaijer for the [base and inspiration](https://github.com/wwaaijer/cc
 ## Disclaimer
 
 This project is currently NOT uploaded to NPM because it is entirely UNFINISHED, do not use it unless you are okay with manually typing lua, or you are developing.
-If you are, please disreguard "Install the package" step and manually install it using git:
+
+If you are, please disreguard the "Install the package" step and manually install it using git:
 
 ```
 npm install git+https://github.com/UnusualNorm/ComputerCraft-CC-Server
