@@ -1,7 +1,6 @@
-import { Computers } from '../src/index';
-import { JsonTypes } from '../src/CC';
+import { Computer, CCLua } from '../src/index';
 
-export default async function testBase(computer: Computers.Base) {
+export default async function testBase(computer: Computer) {
   // INIT TESTING
   computer.init
     .then(() => {
@@ -12,11 +11,30 @@ export default async function testBase(computer: Computers.Base) {
 
   // TODO: Implement string checks in data
   // EVAL TESTING
-  const evalData: JsonTypes[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const evalData: CCLua.JsonTypes[] = [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    'foo',
+    'bar',
+    ['foo', 'bar'],
+    //{ foo: 'bar' },
+    true,
+    false,
+  ];
   for (let i = 0; i < evalData.length; i++) {
     const data = evalData[i];
-    const out = await computer.eval(String(data)).catch(console.error);
-    if (out && out[0] == data) console.log(`Passed eval test #${i}!`);
+    const out = await computer
+      .eval(CCLua.paramify(data).toString())
+      .catch(console.error);
+    if (out && out[0] === data) console.log(`Passed eval test #${i}!`);
     else console.error(`Failed eval test #${i}...`);
   }
 

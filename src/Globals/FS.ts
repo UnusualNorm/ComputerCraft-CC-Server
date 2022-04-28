@@ -1,4 +1,4 @@
-import Global from '../Globals';
+import Global from './Base';
 import { paramify, toParams } from '../Interfaces/CCLua';
 
 class FS extends Global {

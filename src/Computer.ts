@@ -1,10 +1,8 @@
 import { JsonTypes, paramify, toParams } from './Interfaces/CCLua';
 import EventEmitter from 'events';
 import ComputerEvents from './Interfaces/ComputerEvents';
-import Global, * as Globals from './Globals';
+import * as Globals from './Globals';
 import ws from 'ws';
-
-const GlobalsList = Object.keys(Globals);
 
 class Base extends EventEmitter implements ComputerEvents {
   socket: ws.WebSocket;
@@ -20,10 +18,6 @@ class Base extends EventEmitter implements ComputerEvents {
   _CC_DEFAULT_SETTINGS: string;
 
   init: Promise<void>;
-
-  // Globals
-  globals = new Array<Global>();
-
   constructor(socket: ws.WebSocket) {
     super();
     this.socket = socket;
@@ -35,15 +29,11 @@ class Base extends EventEmitter implements ComputerEvents {
         .eval('_CC_DEFAULT_SETTINGS')
         .then((out: [string]) => out);
 
-      // Request globals
-      const GlobalEvaluations: Promise<boolean>[] = [];
+      // Create globals
 
       // Assign global variables
       self._HOST = (await _HOST)[0];
       self._CC_DEFAULT_SETTINGS = (await _CC_DEFAULT_SETTINGS)[0];
-
-      // Create global variables
-      await Promise.all(GlobalEvaluations).then().catch();
       return;
     })(this);
 
@@ -76,7 +66,7 @@ class Base extends EventEmitter implements ComputerEvents {
     socket.once('close', () => this.emit('close'));
   }
 
-  #nonceLength = 5;
+  #nonceLength = 9;
   #nonces = new Map<string, (...data: JsonTypes[]) => unknown>();
   // TODO: Dynamically set the nonce length
   #generateNonce(): string {
@@ -96,16 +86,16 @@ class Base extends EventEmitter implements ComputerEvents {
 
   eval(
     commandString: string,
-    expectNull = false,
     multiLine = false
-  ): Promise<JsonTypes[]> {
-    return new Promise((resolve, reject) => {
+  ) {
+    console.log(commandString)
+    return new Promise<JsonTypes[]>((resolve, reject) => {
       // Create nonce callback before execution
       const nonce = this.#generateNonce();
-      this.#nonces.set(nonce, (...data) => {
+      this.#nonces.set(nonce, (success: boolean, data: JsonTypes[]) => {
         // Usually the first output determines success
-        if (data[0] != null || expectNull) resolve(data);
-        else reject(data);
+        if (success) resolve(data);
+        else reject(data[0]);
       });
 
       // Execute command
@@ -139,7 +129,7 @@ class Base extends EventEmitter implements ComputerEvents {
    * @see OS.startTimer
    */
   async sleep(time: number): Promise<void> {
-    await this.eval(`sleep(${time})`, true);
+    await this.eval(`sleep(${time})`);
     return null;
   }
 

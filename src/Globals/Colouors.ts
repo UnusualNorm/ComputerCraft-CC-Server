@@ -1,7 +1,7 @@
-import Global from '../Globals';
+import Global from './Base';
 import { toParams } from '../Interfaces/CCLua';
 
-interface Colouors extends Global {
+interface Colouors {
   /**
    * @deprecated Use packRGB or unpackRGB directly.
    * @description Either calls colors.packRGB or colors.unpackRGB, depending on how many arguments it receives.
@@ -24,7 +24,7 @@ interface Colouors extends Global {
    * @example await colors.rgb8(0xb23399); // => 0.7, 0.2, 0.6
    * @example await colors.rgb8(0.7, 0.2, 0.6); // => 0xb23399
    */
-  rgb8(rgb: number): Promise<[number, number, number]>;
+  rgb8(rgb: number): Promise<{ r: number; g: number; b: number }>;
 }
 
 /**
@@ -79,14 +79,12 @@ class Colouors extends Global {
    * @description Combines a set of colors (or sets of colors) into a larger set. Useful for Bundled Cables.
    * @param colors The colors to combine.
    * @returns The union of the color sets given in ...
-   * @example colors.combine(colors.white, colors.magenta, colours.lightBlue) // => 13
+   * @example colors.combine(colors.white, colors.magenta, colours.lightBlue); // => 13
    */
-  async combine(...colors: number[]): Promise<number> {
-    const out = await this.computer
-      .eval(`combine(${toParams(...colors)})`)
-      .then((out: [number, null]) => out);
-
-    return out[0];
+  async combine(...colors: number[]) {
+    return this.computer
+      .eval(`colors.combine(${toParams(...colors)})`)
+      .then((out: [number]) => out[0]);
   }
 
   /**
@@ -95,14 +93,12 @@ class Colouors extends Global {
    * @param color The color from which to subtract.
    * @param colors The colors to subtract.
    * @returns The resulting color.
-   * @example colours.subtract(colours.lime, colours.orange, colours.white)
+   * @example colours.subtract(colours.lime, colours.orange, colours.white); // => 32
    */
-  async subtract(color: number, ...colors: number[]): Promise<number> {
-    const out = await this.computer
-      .eval(`subtract(${toParams(color, ...colors)})`)
-      .then((out: [number, null]) => out);
-
-    return out[0];
+  async subtract(color: number, ...colors: number[]) {
+    return this.computer
+      .eval(`colors.subtract(${toParams(color, ...colors)})`)
+      .then((out: [number]) => out[0]);
   }
 
   /**
@@ -114,12 +110,10 @@ class Colouors extends Global {
    * const colorSet = await colors.combine(colors.white, colors.magenta, colours.lightBlue);
    * await colors.test(colorSet, colors.lightBlue); // => true
    */
-  async test(colors: number, color: number): Promise<boolean> {
-    const out = await this.computer
-      .eval(`test(${toParams(colors)}, ${color})`)
-      .then((out: [boolean, ...null[]]) => out);
-
-    return out[0];
+  async test(colors: number, color: number) {
+    return this.computer
+      .eval(`colors.test(${toParams(colors)}, ${color})`)
+      .then((out: [boolean]) => out[0]);
   }
 
   /**
@@ -130,12 +124,10 @@ class Colouors extends Global {
    * @returns The combined hexadecimal colour.
    * @example await colors.packRGB(0.7, 0.2, 0.6); // => 0xb23399
    */
-  async packRGB(r: number, g: number, b: number): Promise<number> {
-    const out = await this.computer
-      .eval(`combine(${r}, ${g}, ${b})`)
-      .then((out: [number, null]) => out);
-
-    return out[0];
+  async packRGB(r: number, g: number, b: number) {
+    return this.computer
+      .eval(`colors.combine(${r}, ${g}, ${b})`)
+      .then((out: [number]) => out[0]);
   }
 
   /**
@@ -144,33 +136,31 @@ class Colouors extends Global {
    * @returns The red channel, will be between 0 and 1.
    * @returns The green channel, will be between 0 and 1.
    * @returns The blue channel, will be between 0 and 1.
-   * @example await colors.unpackRGB(0xb23399); // => 0.7, 0.2, 0.6
+   * @example await colors.unpackRGB(0xb23399); // => { r: 0.7, g: 0.2, b: 0.6 }
    */
-  async unpackRGB(rgb: number): Promise<number> {
-    const out = await this.computer
-      .eval(`combine(${rgb})`)
-      .then((out: [number]) => out);
-
-    return out[0];
+  async unpackRGB(rgb: number) {
+    return this.computer
+      .eval(`colors.combine(${rgb})`)
+      .then((out: [number, number, number]) => ({
+        r: out[0],
+        g: out[1],
+        b: out[2],
+      }));
   }
 
   /**
    * @deprecated Use packRGB or unpackRGB directly.
    * @description Either calls colors.packRGB or colors.unpackRGB, depending on how many arguments it receives.
-   * @example await colors.rgb8(0xb23399); // => 0.7, 0.2, 0.6
+   * @example await colors.rgb8(0xb23399); // => { r: 0.7, g: 0.2, b: 0.6 }
    * @example await colors.rgb8(0.7, 0.2, 0.6); // => 0xb23399
    */
-  async rgb8(
-    r: number,
-    g?: number,
-    b?: number
-  ): Promise<number | [number, number, number]> {
-    const out = await this.computer
-      .eval(`combine(${r}, ${g}, ${b}})`)
-      .then((out: [number] | [number, number, number]) => out);
-
-    if (out.length == 1) return out[0];
-    else return out;
+  async rgb8(r: number, g?: number, b?: number) {
+    return this.computer
+      .eval(`colors.combine(${r}, ${g}, ${b}})`)
+      .then((out: [number] | [number, number, number]) => {
+        if (out.length == 1) return out[0];
+        else return { r: out[0], g: out[1], b: out[2] };
+      });
   }
 
   /**
@@ -180,12 +170,10 @@ class Colouors extends Global {
    * @param color The color to convert.
    * @returns The blit hex code of the color.
    */
-  async toBlit(color: number): Promise<string> {
-    const out = await this.computer
-      .eval(`combine(${color})`)
-      .then((out: [string, null]) => out);
-
-    return out[0];
+  async toBlit(color: number) {
+    return this.computer
+      .eval(`colors.combine(${color})`)
+      .then((out: [string]) => out[0]);
   }
 }
 

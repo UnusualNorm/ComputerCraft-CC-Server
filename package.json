@@ -11,8 +11,6 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
     "test": "ts-node test/index.ts",
     "lint": "prettier -c -w . && eslint --fix",
     "build": "yarn build:clean && yarn build:copy && tsc",
@@ -25,6 +23,7 @@
     "ws": "^8.5.0"
   },
   "devDependencies": {
+    "@prettier/plugin-lua": "git+https://github.com/prettier/plugin-lua",
     "@types/node": "^17.0.24",
     "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^5.19.0",

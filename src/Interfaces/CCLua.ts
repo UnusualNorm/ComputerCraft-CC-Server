@@ -3,6 +3,7 @@ export type Side = 'top' | 'bottom' | 'left' | 'right' | 'front' | 'back';
 
 export const paramify = (param: JsonTypes) => {
   if (typeof param == 'string') param = JSON.stringify(param);
+  if (Array.isArray(param)) param = `{${toParams(...param)}}`
   return param;
 };
 

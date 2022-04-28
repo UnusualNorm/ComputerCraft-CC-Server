@@ -1,10 +1,12 @@
-import Global from '../Globals';
+import GlobalBase, { VariableGlobalBase } from './Base';
 import Computer from '../Computer';
 import { paramify, toParams } from '../Interfaces/CCLua';
 
-class AsyncCommands extends Global {}
+class AsyncCommands extends GlobalBase {}
 
-class Commands extends Global {
+class Commands extends VariableGlobalBase {
+  readonly variableName = 'commands';
+
   constructor(Computer: Computer) {
     super(Computer);
 
@@ -24,32 +26,26 @@ class Commands extends Global {
     return { success: out[0], output: out[1], affected: out[2] };
   }
 
-  async execAsync(command: string): Promise<number> {
-    const out = await this.computer
+  async execAsync(command: string) {
+    return this.computer
       .eval(`commands.execAsync(${paramify(command)})`)
-      .then((out: [number]) => out);
-
-    return out[0];
+      .then((out: [number]) => out[0]);
   }
 
   async list(...commands: string[]): Promise<string[]> {
-    const out = await this.computer
+    return this.computer
       .eval(`commands.list(${toParams(...commands)})`)
-      .then((out: [string[]]) => out);
-
-    return out[0];
+      .then((out: [string[]]) => out[0]);
   }
 
-  async getBlockPosition(): Promise<{ x: number; y: number; z: number }> {
-    const out = await this.computer
+  async getBlockPosition() {
+    return this.computer
       .eval('commands.getBlockPosition()')
-      .then((out: [number, number, number]) => out);
-
-    return {
-      x: out[0],
-      y: out[1],
-      z: out[2],
-    };
+      .then((out: [number, number, number]) => ({
+        x: out[0],
+        y: out[1],
+        z: out[2],
+      }));
   }
 
   async getBlockInfos(
@@ -60,29 +56,20 @@ class Commands extends Global {
     maxY: number,
     maxZ: number,
     dimension?: string
-  ): Promise<Record<string, unknown>[]> {
-    const out = await this.computer
+  ) {
+    return this.computer
       .eval(
         `commands.getBlockInfos(${minX}, ${minY}, ${minZ}, ${maxX}, ${maxY}, ${maxZ}, ${paramify(
           dimension
         )})`
       )
-      .then((out: [Record<string, unknown>[]]) => out);
-
-    return out[0];
+      .then((out: [Record<string, unknown>[]]) => out[0]);
   }
 
-  async getBlockInfo(
-    x: number,
-    y: number,
-    z: number,
-    dimension?: string
-  ): Promise<Record<string, unknown>> {
-    const out = await this.computer
+  async getBlockInfo(x: number, y: number, z: number, dimension?: string) {
+    return this.computer
       .eval(`commands.getBlockInfos(${x}, ${y}, ${z}, ${paramify(dimension)})`)
-      .then((out: [Record<string, unknown>]) => out);
-
-    return out[0];
+      .then((out: [Record<string, unknown>]) => out[0]);
   }
 }
 
