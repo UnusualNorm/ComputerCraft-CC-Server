@@ -23,7 +23,7 @@
     "ws": "^8.5.0"
   },
   "devDependencies": {
-    "@prettier/plugin-lua": "git+https://github.com/prettier/plugin-lua",
+    "@prettier/plugin-lua": "https://github.com/prettier/plugin-lua",
     "@types/node": "^17.0.24",
     "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^5.19.0",

@@ -64,16 +64,9 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@prettier/plugin-lua@^0.0.1":
+"@prettier/plugin-lua@https://github.com/prettier/plugin-lua":
   version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@prettier/plugin-lua/-/plugin-lua-0.0.1.tgz#60498b7e3ca23bf390a9923c8d9072ca4020ce61"
-  integrity sha512-fZ6hUPKfZq3KY4zWSQpdvPrbi1LtxPXJvFJYMJHxt8HxRyyySlFWspKhgcIdlaZ1EL3cMyP2muPvvDpM7GbyBQ==
-  dependencies:
-    luaparse "0.2.1"
-
-"@prettier/plugin-lua@git+https://github.com/prettier/plugin-lua":
-  version "0.0.1"
-  resolved "git+https://github.com/prettier/plugin-lua#63d45f57abe20828edda91d068fd957174bbada4"
+  resolved "https://github.com/prettier/plugin-lua#63d45f57abe20828edda91d068fd957174bbada4"
   dependencies:
     luaparse "0.2.1"
 

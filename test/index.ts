@@ -9,8 +9,6 @@ server.on('connection', async (computer) => {
   console.log('Computer has connected!');
   await testBase(computer);
   await testColor(computer);
-  await computer.close();
-  computer.on('close', () => console.log('Computer has disconnected...'));
 });
 
 server.listen(port);

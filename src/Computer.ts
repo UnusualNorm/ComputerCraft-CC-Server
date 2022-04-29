@@ -4,7 +4,7 @@ import ComputerEvents from './Interfaces/ComputerEvents';
 import * as Globals from './Globals';
 import ws from 'ws';
 
-class Base extends EventEmitter implements ComputerEvents {
+class Computer extends EventEmitter implements ComputerEvents {
   socket: ws.WebSocket;
 
   /**
@@ -51,47 +51,62 @@ class Base extends EventEmitter implements ComputerEvents {
     });
 
     // Event handler
-    this.#nonces.set(
-      '!event',
-      async (eventName: string, ...data: JsonTypes[]) => {
-        if (!eventName) {
-          // No event name... Either "redstone" "term_resize" or "turtle_inventory"
-          return;
-        }
+    this.#nonces.set('!event', async (eventName: string, data: JsonTypes[]) => {
+      if (!eventName) {
+        // No event name... Either "redstone" "term_resize" or "turtle_inventory"
+        return;
+      }
 
-        this.emit(eventName, ...data);
+      this.emit(eventName, ...data);
+    });
+
+    // Callback handler
+    this.#nonces.set(
+      '!callback',
+      async (
+        action: string,
+        cbNonce: string,
+        cbId: string,
+        arg: JsonTypes[]|Record<string, never>
+      ) => {
+        if (!Array.isArray(arg)) arg = new Array<JsonTypes>();
+        if (action == 'req' && this.#callbacks.has(cbId)) {
+          const out = await this.#callbacks.get(cbId)(...arg);
+          this.socket.send(JSON.stringify(['!callback', 'res', cbNonce, out]));
+        } else if (action == 'create') this.#remoteCallbacks.push(cbId);
       }
     );
-
-    socket.once('close', () => this.emit('close'));
   }
 
-  #nonceLength = 9;
+  #callbacks = new Map<
+    string,
+    (...data: JsonTypes[]) => JsonTypes[] | Promise<JsonTypes[]>
+  >();
+  #remoteCallbacks = new Array<string>();
   #nonces = new Map<string, (...data: JsonTypes[]) => unknown>();
-  // TODO: Dynamically set the nonce length
-  #generateNonce(): string {
+  #generateNonce(map: Map<string, unknown>, minLength = 1): string {
     // Declare all characters
     const chars =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
+    // Detect if the minLength is enough
+    const maxCount = Math.pow(chars.length, minLength);
+    if (map.size >= maxCount) return this.#generateNonce(map, minLength + 1);
+
     // Pick characers randomly
     let nonce = '';
-    for (let i = 0; i < this.#nonceLength; i++)
+    for (let i = 0; i < minLength; i++)
       nonce += chars.charAt(Math.floor(Math.random() * chars.length));
 
     // Loop if the nonce already exists
-    if (this.#nonces.has(nonce)) return this.#generateNonce();
+    if (this.#nonces.has(nonce)) return this.#generateNonce(map, minLength);
     else return nonce;
   }
 
-  eval(
-    commandString: string,
-    multiLine = false
-  ) {
-    console.log(commandString)
+  eval(commandString: string, multiLine = false) {
     return new Promise<JsonTypes[]>((resolve, reject) => {
       // Create nonce callback before execution
-      const nonce = this.#generateNonce();
+      const nonce = this.#generateNonce(this.#nonces);
       this.#nonces.set(nonce, (success: boolean, data: JsonTypes[]) => {
         // Usually the first output determines success
         if (success) resolve(data);
@@ -102,6 +117,30 @@ class Base extends EventEmitter implements ComputerEvents {
       this.socket.send(
         JSON.stringify([nonce, `${multiLine ? '' : 'return '}${commandString}`])
       );
+    });
+  }
+
+  runCallback(cbId: string, ...arg: JsonTypes[]) {
+    return new Promise<JsonTypes[]>((resolve) => {
+      // Create nonce callback before calling
+      const nonce = this.#generateNonce(this.#nonces);
+      this.#nonces.set(nonce, (data: JsonTypes[]) => resolve(data));
+
+      // Execute callback
+      this.socket.send(JSON.stringify(['!callback', 'req', nonce, cbId, arg]));
+    });
+  }
+
+  callback(
+    cb: (...arg: JsonTypes[]) => JsonTypes[] | Promise<JsonTypes[]>
+  ): Promise<string> {
+    return new Promise((resolve) => {
+      const cbNonce = this.#generateNonce(this.#nonces);
+      const cbId = this.#generateNonce(this.#callbacks);
+
+      this.#nonces.set(cbNonce, () => resolve(cbId));
+      this.socket.send(JSON.stringify(['!callback', 'create', cbNonce, cbId]));
+      this.#callbacks.set(cbId, cb);
     });
   }
 
@@ -179,45 +218,48 @@ class Base extends EventEmitter implements ComputerEvents {
    * @returns The text typed in.
    * @example
    * // Read a string and echo it back to the user
-   * computer.write("> ");
-   * const msg = computer.read();
-   * computer.print(msg);
+   * await computer.write("> ");
+   * const msg = await computer.read();
+   * await computer.print(msg);
    *
    * // Prompt a user for a password.
-   * const promptPassword = async () => {
-   *   await computer.write("Password> ");
-   *   const pwd = await computer.read("*");
-   *   if (pwd == "let me in") {
-   *     await computer.print("Logged in!");
-   *     return;
-   *   } else {
-   *     await computer.print("Incorrect password, try again.");
-   *     return (await promptPassword());
-   *   }
+   * while (true) {
+   *   await computer.write('Password> ');
+   *   const pwd = await computer.read('*');
+   *   if (pwd == 'let me in') break;
+   *   await computer.print('Incorrect password, try again.');
    * }
-   * promptPassword();
+   * await computer.print('Logged in!');
    *
-   * @todo Add third example
+   * // A complete example with completion, history and a default value.
+   * const {completion} = computer.globals;
+   * const history = [ "potato", "orange", "apple" ]
+   * const choices = [ "apple", "orange", "banana", "strawberry" ]
+   * await computer.write("> ")
+   * const msg = await computer.read(null, history, (partial) => completion, "app")
+   * await computer.print(msg)
    */
   async read(
     replaceChar?: string,
     history?: JsonTypes[],
-    completeFn?: (partial: string) => string[],
+    completeFn?: string | ((partial: string) => string[] | Promise<string[]>),
     defaultText?: string
-  ): Promise<string> {
-    const out = await this.eval(
-      `read(${replaceChar}, ${history}, ${completeFn}, ${defaultText})`
-    );
-    return String(out[0]);
-  }
-
-  close(): Promise<void> {
-    return new Promise((resolve) => {
-      // Triger socket.close()
-      this.socket.once('close', () => resolve());
-      this.socket.send(JSON.stringify([null, `Socket.close()`]));
-    });
+  ) {
+    return this.eval(
+      `read(${toParams(replaceChar, history)}, ${
+        completeFn
+          ? typeof completeFn == 'string'
+            ? `function(partial)\n${completeFn}\nend`
+            : `RemoteCallbacks[${paramify(
+                await this.callback(
+                  // Auto-format the output into an array
+                  async (partial: string) => [await completeFn(partial)]
+                )
+              )}]`
+          : null
+      }, ${paramify(defaultText)})`
+    ).then((out: [string]) => out[0]);
   }
 }
 
-export default Base;
+export default Computer;

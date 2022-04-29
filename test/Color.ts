@@ -29,4 +29,6 @@ export default async function testColor(computer: Computer) {
     if (testOut === true) console.log('Passed color test test!');
     else console.error('Failed color test test...');
   } else console.warn('Unable to test test due to combine test failing...');
+
+  return console.log('Finished color testing!');
 }

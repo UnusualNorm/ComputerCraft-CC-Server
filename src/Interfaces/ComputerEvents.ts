@@ -1,8 +1,6 @@
 import { JsonTypes, Side } from './CCLua';
 
 interface BaseEvents {
-  on(event: 'disconnect', listener: () => unknown): this;
-
   /**
    * @description The timer event is fired when an alarm started with os.setAlarm completes.
    * @returns The ID of the alarm that finished.

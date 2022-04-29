@@ -16,7 +16,7 @@ const sourcePath = path.join(__dirname, '../Client.lua');
 const clientSource = fs.readFileSync(sourcePath, { encoding: 'utf-8' });
 
 function buildClientSource(host: string) {
-  const connectionVariableDefinition = `local connectionURL = "ws://${host}"`;
+  const connectionVariableDefinition = `_G.ConnectionURL = "${host}"`;
   return `${connectionVariableDefinition}\n${clientSource}`;
 }
 
