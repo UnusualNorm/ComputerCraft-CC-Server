@@ -124,7 +124,7 @@ class Computer extends EventEmitter implements ComputerEvents {
     return new Promise<JsonTypes[]>((resolve) => {
       // Create nonce callback before calling
       const nonce = this.#generateNonce(this.#nonces);
-      this.#nonces.set(nonce, (data: JsonTypes[]) => resolve(data));
+      this.#nonces.set(nonce, (...data: JsonTypes[]) => resolve(data));
 
       // Execute callback
       this.socket.send(JSON.stringify(['!callback', 'req', nonce, cbId, arg]));

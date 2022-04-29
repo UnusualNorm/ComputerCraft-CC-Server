@@ -156,7 +156,7 @@ while true do
 	-- url, rawMessage, isBinary
 	local event
 	if tableLength(EventQueue) > 0 then
-		event = EventQueue[0]
+		event = EventQueue[1]
 		table.remove(EventQueue, 1)
 	else
 		event = { os.pullEvent() }
@@ -186,16 +186,11 @@ while true do
 					local arg = message[5]
 					Socket.send(
 						textutils.serialiseJSON({
-							'!callback',
-							'res',
 							cbNonce,
-							{ Callbacks[cbId](table.unpack(arg)) },
+							Callbacks[cbId](table.unpack(arg)),
 						})
 					)
 				end
-			elseif nonce == '!close' then
-				Socket.close()
-				exit()
 			end
 			-- FIXME: If server disconnects during an operation, the client crashes...
 		else

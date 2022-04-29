@@ -31,6 +31,7 @@ export default async function testBase(computer: Computer) {
     true,
     false,
   ];
+  
   for (let i = 0; i < evalData.length; i++) {
     const data = evalData[i];
     const out = await computer
@@ -45,7 +46,9 @@ export default async function testBase(computer: Computer) {
   const cbId = await computer.callback(cb);
   const cbRId = await computer.eval(`RemoteCallbacks[${CCLua.paramify(cbId)}]`);
   const cbOut = await computer.runCallback(String(cbRId));
-  console.log(cbOut);
+  
+  if (cbOut[0] == cb()) console.log('Passed computer callback test!');
+  else console.error('Failed computer callback test...')
 
   // SLEEP TESTING
   const beforeSleep = Date.now();
