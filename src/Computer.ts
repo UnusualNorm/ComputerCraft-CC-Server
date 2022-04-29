@@ -67,7 +67,7 @@ class Computer extends EventEmitter implements ComputerEvents {
         action: string,
         cbNonce: string,
         cbId: string,
-        arg: JsonTypes[]|Record<string, never>
+        arg: JsonTypes[] | Record<string, never>
       ) => {
         if (!Array.isArray(arg)) arg = new Array<JsonTypes>();
         if (action == 'req' && this.#callbacks.has(cbId)) {

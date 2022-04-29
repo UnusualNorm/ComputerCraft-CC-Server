@@ -43,10 +43,9 @@ export default async function testBase(computer: Computer) {
   // CALLBACK TESTING
   const cb = () => ['Hello World!'];
   const cbId = await computer.callback(cb);
-  const cbRId = await computer
-    .eval(`RemoteCallbacks[${CCLua.paramify(cbId)}]`);
+  const cbRId = await computer.eval(`RemoteCallbacks[${CCLua.paramify(cbId)}]`);
   const cbOut = await computer.runCallback(String(cbRId));
-  console.log(cbOut)
+  console.log(cbOut);
 
   // SLEEP TESTING
   const beforeSleep = Date.now();
