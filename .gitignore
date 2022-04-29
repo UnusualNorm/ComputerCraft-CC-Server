@@ -78,5 +78,5 @@ typings/
 # Build files
 dist/
 
-# Type files
-lib/
+# NPM lock
+package-lock.json
