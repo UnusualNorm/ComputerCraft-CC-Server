@@ -1,4 +1,5 @@
 _G.Socket, SocketErr = http.websocket('ws://' .. ConnectionURL)
+_G.CollectingEvents = true
 _G.Callbacks = {}
 _G.RemoteCallbacks = {}
 _G.RemoteCallbackNonces = {}
@@ -105,6 +106,14 @@ local function startsWith(String, Start)
 	return string.sub(String, 1, string.len(Start)) == Start
 end
 
+local function reconnect()
+	RemoteCallbacks = {}
+	RemoteCallbackNonces = {}
+	Callbacks = {}
+	EventQueue = {}
+	connectToSocket()
+end
+
 -- Create a callback
 local function createCallback(cbId)
 	local function callback(...)
@@ -122,6 +131,7 @@ local function createCallback(cbId)
 			})
 		)
 		local isResponse = false
+		CollectingEvents = false
 
 		repeat
 			local rawEvent = { os.pullEvent() }
@@ -132,23 +142,69 @@ local function createCallback(cbId)
 					if message[1] == '!callback' and message[2] == 'res' and message[3] == cbNonce then
 						response = message[4]
 						isResponse = true
-					elseif message[1] == '!callback' and message[2] == 'delete' and message[3] == cbNonce then
-						break
 					else
 						table.insert(EventQueue, rawEvent)
 					end
 				end
+			elseif event == 'websocket_closed' then
+				break
 			else
 				table.insert(EventQueue, rawEvent)
 			end
 		until isResponse
+		CollectingEvents = true
+		os.queueEvent('eventcollecter_start')
 
 		if isResponse then
 			return table.unpack(response)
+		else
+			return
 		end
 	end
 
 	RemoteCallbacks[cbId] = callback
+end
+
+local function eval(nonce, code, params)
+	local globalNames = {}
+	setmetatable(globalNames, { __index = _G })
+	local response = textutils.serialiseJSON({ nonce, false, 'ERR_UNKNOWN' })
+
+	local fn, fnErr = load(code, nil, 't', globalNames)
+
+	if fn then
+		local rawOutput = { pcall(fn()(table.unpack(params))) }
+		local success = table.remove(rawOutput, 1)
+		local output = prepareTable(rawOutput)
+
+		if success then
+			response = textutils.serialiseJSON({ nonce, true, output })
+		else
+			local pcErr = output[1]
+			printError(pcErr)
+			response = textutils.serialiseJSON({ nonce, false, { pcErr } })
+		end
+	else
+		printError(fnErr)
+		response = textutils.serialiseJSON({ nonce, false, { fnErr } })
+	end
+
+	Socket.send(response)
+end
+
+local function eventCollector()
+	while true do
+		if not CollectingEvents then
+			os.pullEvent('eventcollecter_start')
+		else
+			local event = { os.pullEvent() }
+			if not CollectingEvents then
+				os.queueEvent(table.unpack(event))
+			else
+				table.insert(EventQueue, event)
+			end
+		end
+	end
 end
 
 while true do
@@ -165,7 +221,6 @@ while true do
 
 	if eventName == 'websocket_closed' and event[1] == ConnectionURL then
 		print('WebSocket closed...')
-		connectToSocket()
 	elseif eventName == 'websocket_message' and event[1] == ConnectionURL then
 		local message = textutils.unserializeJSON(event[2])
 		local nonce = message[1]
@@ -180,42 +235,13 @@ while true do
 				if action == 'create' then
 					createCallback(cbId)
 					Socket.send(textutils.serialiseJSON({ cbNonce }))
-				elseif action == 'delete' then
-					RemoteCallbacks[cbId] = nil
-				elseif action == 'req' then
-					local arg = message[5]
-					Socket.send(
-						textutils.serialiseJSON({
-							cbNonce,
-							Callbacks[cbId](table.unpack(arg)),
-						})
-					)
 				end
 			end
 			-- FIXME: If server disconnects during an operation, the client crashes...
 		else
-			local globalNames = {}
-			setmetatable(globalNames, { __index = _G })
-			local response =
-				textutils.serialiseJSON({ message[1], false, 'ERR_UNKNOWN' })
-			local fn, fnErr = load(message[2], nil, 't', globalNames)
-
-			if fn then
-				local rawOutput = { pcall(fn) }
-				local success = table.remove(rawOutput, 1)
-				local output = prepareTable(rawOutput)
-
-				if success then
-					response = textutils.serialiseJSON({ nonce, true, output })
-				else
-					local pcErr = output[1]
-					response =
-						textutils.serialiseJSON({ nonce, false, { pcErr } })
-				end
-			else
-				response = textutils.serialiseJSON({ nonce, false, { fnErr } })
-			end
-			Socket.send(response)
+			parallel.waitForAny(function()
+				eval(nonce, message[2], message[3])
+			end, eventCollector)
 		end
 	elseif eventName ~= 'websocket_failure' and eventName ~= 'websocket_success' then
 		if eventName == nil then

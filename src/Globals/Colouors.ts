@@ -83,7 +83,7 @@ class Colouors extends Global {
    */
   async combine(...colors: number[]) {
     return this.computer
-      .eval(`colors.combine(${toParams(...colors)})`)
+      .run(`colors.combine`, ...colors)
       .then((out: [number]) => out[0]);
   }
 
@@ -97,7 +97,7 @@ class Colouors extends Global {
    */
   async subtract(color: number, ...colors: number[]) {
     return this.computer
-      .eval(`colors.subtract(${toParams(color, ...colors)})`)
+      .run(`colors.subtract`, color, ...colors)
       .then((out: [number]) => out[0]);
   }
 
@@ -112,7 +112,7 @@ class Colouors extends Global {
    */
   async test(colors: number, color: number) {
     return this.computer
-      .eval(`colors.test(${toParams(colors)}, ${color})`)
+      .run(`colors.test`, colors, color)
       .then((out: [boolean]) => out[0]);
   }
 
@@ -126,7 +126,7 @@ class Colouors extends Global {
    */
   async packRGB(r: number, g: number, b: number) {
     return this.computer
-      .eval(`colors.combine(${r}, ${g}, ${b})`)
+      .run(`colors.combine`, r, g, b)
       .then((out: [number]) => out[0]);
   }
 
@@ -140,7 +140,7 @@ class Colouors extends Global {
    */
   async unpackRGB(rgb: number) {
     return this.computer
-      .eval(`colors.combine(${rgb})`)
+      .run(`colors.combine`, rgb)
       .then((out: [number, number, number]) => ({
         r: out[0],
         g: out[1],
@@ -156,7 +156,7 @@ class Colouors extends Global {
    */
   async rgb8(r: number, g?: number, b?: number) {
     return this.computer
-      .eval(`colors.combine(${r}, ${g}, ${b}})`)
+      .run(`colors.combine`, r, g, b)
       .then((out: [number] | [number, number, number]) => {
         if (out.length == 1) return out[0];
         else return { r: out[0], g: out[1], b: out[2] };
@@ -172,7 +172,7 @@ class Colouors extends Global {
    */
   async toBlit(color: number) {
     return this.computer
-      .eval(`colors.combine(${color})`)
+      .run(`colors.combine`, color)
       .then((out: [string]) => out[0]);
   }
 }

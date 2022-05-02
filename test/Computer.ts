@@ -1,4 +1,5 @@
 import { Computer, CCLua } from '../src/index';
+import _ from 'underscore';
 
 export default async function testBase(computer: Computer) {
   // INIT TESTING
@@ -27,69 +28,90 @@ export default async function testBase(computer: Computer) {
     'foo',
     'bar',
     ['foo', 'bar'],
-    //{ foo: 'bar' },
+    { foo: 'bar' },
     true,
     false,
   ];
-  
+
   for (let i = 0; i < evalData.length; i++) {
     const data = evalData[i];
-    const out = await computer
-      .eval(CCLua.paramify(data).toString())
+    computer
+      .get('arg[1]', data)
+      .then((out) => {
+        if (_.isEqual(out[0], data))
+          console.log(`Passed computer eval test #${i}!`);
+        else console.error(`Failed computer eval test #${i}...`);
+      })
       .catch(console.error);
-    if (out && out[0] === data) console.log(`Passed computer eval test #${i}!`);
-    else console.error(`Failed computer eval test #${i}...`);
   }
 
   // CALLBACK TESTING
   const cb = () => ['Hello World!'];
-  const cbId = await computer.callback(cb);
-  const cbRId = await computer.eval(`RemoteCallbacks[${CCLua.paramify(cbId)}]`);
-  const cbOut = await computer.runCallback(String(cbRId));
-  
-  if (cbOut[0] == cb()) console.log('Passed computer callback test!');
-  else console.error('Failed computer callback test...')
+  computer
+    .callback(cb)
+    .then((cbId) => computer.get(cbId.pointer))
+    .then((rCbId) => computer.runCallback(String(rCbId[0])))
+    .then((cbOut) => {
+      if (_.isEqual(cbOut, cb())) console.log('Passed computer callback test!');
+      else console.error('Failed computer callback test...');
+    });
 
   // SLEEP TESTING
   const beforeSleep = Date.now();
-  await computer.sleep(3).catch(console.error);
-  const afterSleep = Date.now();
-  const sleepTime = afterSleep - beforeSleep;
-  const sleepSeconds = sleepTime / 1000;
+  computer
+    .sleep(3)
+    .then(() => {
+      // Calculate ammount of time
+      const afterSleep = Date.now();
+      const sleepTime = afterSleep - beforeSleep;
 
-  if (sleepSeconds >= 2.5 && sleepSeconds <= 3.5)
-    console.log('Passed computer sleep test!');
-  else console.error('Failed computer sleep test...');
+      // Account for latency
+      if (sleepTime >= 2500 && sleepTime <= 3500)
+        console.log('Passed computer sleep test!');
+      else console.error('Failed computer sleep test...');
+    })
+    .catch(console.error);
 
   // WRITE TESTING
   const writeString = 'Hello\nWorld!';
   const writeLength = writeString.split('\n').length - 1;
-  const writeOut = await computer.write(writeString).catch(console.error);
-
-  if (writeOut == writeLength) console.log('Passed computer write test!');
-  else console.error('Failed computer write test...');
+  computer
+    .write(writeString)
+    .then((writeOut) => {
+      if (writeOut == writeLength) console.log('Passed computer write test!');
+      else console.error('Failed computer write test...');
+    })
+    .catch(console.error);
 
   // PRINT TESTING
   const printString = 'Hello\nWorld!';
   const printLength = printString.split('\n').length;
-  const printOut = await computer.print(printString).catch(console.error);
-
-  if (printOut == printLength) console.log('Passed computer print test!');
-  else console.error('Failed computer print test...');
+  computer
+    .print(printString)
+    .then((printOut) => {
+      if (printOut == printLength) console.log('Passed computer print test!');
+      else console.error('Failed computer print test...');
+    })
+    .catch(console.error);
 
   // PRINTERROR TESTING
   const printErrorString = 'Hello World!';
-  await computer.printError(printErrorString).catch(console.error);
-  console.warn(
-    'Computer error printing unverifiable, please manually check computer terminal...'
-  );
+  computer
+    .printError(printErrorString)
+    .then(() =>
+      console.warn(
+        'Computer error printing unverifiable, please manually check computer terminal...'
+      )
+    )
+    .catch(console.error);
 
   // READ TESTING
   const readString = 'success';
   console.log(
     'Queued computer read test... Please enter "success" in the terminal when prompted...'
   );
-  const readOut = await computer
+
+  computer
     .read(
       undefined,
       ['success', 'failure'],
@@ -98,20 +120,20 @@ export default async function testBase(computer: Computer) {
         const autoFill = ['success', 'failure'];
         const prompt = autoFill.filter((s) => s.startsWith(partial));
 
-        if (prompt)
-          for (let i = 0; i < prompt.length; i++) {
-            const fill = prompt[i];
-            prompt[i] = fill.substring(partial.length);
-          }
-        //else if (partial == '') prompt = autoFill;
+        for (let i = 0; i < prompt.length; i++) {
+          const fill = prompt[i];
+          prompt[i] = fill.substring(partial.length);
+        }
 
         return prompt;
       },
       'failure'
     )
+    .then((readOut) => {
+      if (readOut == readString) console.log('Passed computer read test!');
+      else console.error('Failed computer read test...');
+    })
     .catch(console.error);
-  if (readOut == readString) console.log('Passed computer read test!');
-  else console.error('Failed computer read test...');
 
   return console.log('Finished computer testing!');
 }

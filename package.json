@@ -25,6 +25,7 @@
   "devDependencies": {
     "@prettier/plugin-lua": "https://github.com/prettier/plugin-lua",
     "@types/node": "^17.0.24",
+    "@types/underscore": "^1.11.4",
     "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^5.19.0",
     "@typescript-eslint/parser": "^5.19.0",
@@ -33,6 +34,7 @@
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "ts-node": "^10.7.0",
-    "typescript": "^4.6.3"
+    "typescript": "^4.6.3",
+    "underscore": "^1.13.3"
   }
 }

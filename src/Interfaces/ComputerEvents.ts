@@ -1,6 +1,6 @@
 import { JsonTypes, Side } from './CCLua';
 
-interface BaseEvents {
+declare interface ComputerEvents {
   /**
    * @description The timer event is fired when an alarm started with os.setAlarm completes.
    * @returns The ID of the alarm that finished.
@@ -13,7 +13,7 @@ interface BaseEvents {
    * });
    * @see os.setAlarm To start an alarm.
    */
-  on(event: 'alarm', listener: (id: number) => unknown): this;
+  alarm: (id: number) => unknown;
 
   /**
    * @description
@@ -26,7 +26,7 @@ interface BaseEvents {
    * computer.on('char', character => console.log(`${character} was pressed.`))
    * @see key To listen to any key press.
    */
-  on(event: 'char', listener: (character: string) => unknown): this;
+  char: (character: string) => unknown;
 
   /**
    * @description The computer_command event is fired when the /computercraft queue command is run for the current computer.
@@ -35,7 +35,7 @@ interface BaseEvents {
    * // Prints the contents of messages sent:
    * computer.on('computer_command', args => console.log('Received message:', ...args))
    */
-  on(event: 'computer_command', listener: (args: string[]) => unknown): this;
+  computer_command: (args: string[]) => unknown;
 
   /**
    * @description The disk event is fired when a disk is inserted into an adjacent or networked disk drive.
@@ -45,7 +45,7 @@ interface BaseEvents {
    * computer.on('disk', side => console.log(`Inserted a disk on side ${side}`))
    * @see disk_eject For the event sent when a disk is removed.
    */
-  on(event: 'disk', listener: (side: Side) => unknown): this;
+  disk: (side: Side) => unknown;
 
   /**
    * @description The disk_eject event is fired when a disk is removed from an adjacent or networked disk drive.
@@ -55,102 +55,70 @@ interface BaseEvents {
    * computer.on('disk_eject', side => console.log(`Removed a disk on side ${side}`))
    * @see disk For the event sent when a disk is inserted.
    */
-  on(event: 'disk_eject', listener: (side: Side) => unknown): this;
+  disk_eject: (side: Side) => unknown;
 
-  on(
-    event: 'http_check',
-    listener: (url: string, success: boolean, err: string) => unknown
-  ): this;
+  http_check: (url: string, success: boolean, err: string) => unknown;
 
-  on(
-    event: 'http_failure',
-    listener: (url: string, err: string, handle: null) => unknown
-  ): this;
+  http_failure: (url: string, err: string, handle: null) => unknown;
 
-  on(
-    event: 'http_success',
-    listener: (url: string, handle: null) => unknown
-  ): this;
+  http_success: (url: string, handle: null) => unknown;
 
-  on(event: 'key', listener: (key: number, is_held: boolean) => unknown): this;
+  key: (key: number, is_held: boolean) => unknown;
 
-  on(event: 'key_up', listener: (key: number) => unknown): this;
+  key_up: (key: number) => unknown;
 
-  on(
-    event: 'modem_message',
-    listener: (
-      side: Side,
-      channel: number,
-      replyChannel: number,
-      message: JsonTypes,
-      distance: number
-    ) => unknown
-  ): this;
+  modem_message: (
+    side: Side,
+    channel: number,
+    replyChannel: number,
+    message: JsonTypes,
+    distance: number
+  ) => unknown;
 
-  on(event: 'monitor_resize', listener: (side: Side) => unknown): this;
-  on(event: 'monitor_resize', listener: (id: number) => unknown): this;
+  monitor_resize: ((id: number) => unknown) | ((side: Side) => unknown);
 
-  on(
-    event: 'monitor_touch',
-    listener: (side: Side, x: number, y: number) => unknown
-  ): this;
-  on(
-    event: 'monitor_touch',
-    listener: (id: number, x: number, y: number) => unknown
-  ): this;
+  monitor_touch:
+    | ((side: Side, x: number, y: number) => unknown)
+    | ((id: number, x: number, y: number) => unknown);
 
-  on(
-    event: 'mouse_click',
-    listener: (button: number, x: number, y: number) => unknown
-  ): this;
+  mouse_click: (button: number, x: number, y: number) => unknown;
 
-  on(
-    event: 'mouse_drag',
-    listener: (button: number, x: number, y: number) => unknown
-  ): this;
+  mouse_drag: (button: number, x: number, y: number) => unknown;
 
-  on(
-    event: 'mouse_scroll',
-    listener: (dir: -1 | 1, x: number, y: number) => unknown
-  ): this;
+  mouse_scroll: (dir: -1 | 1, x: number, y: number) => unknown;
 
-  on(
-    event: 'mouse_up',
-    listener: (button: number, x: number, y: number) => unknown
-  ): this;
+  mouse_up: (button: number, x: number, y: number) => unknown;
 
-  on(event: 'paste', listener: (text: string) => unknown): this;
+  paste: (text: string) => unknown;
 
-  on(event: 'peripheral', listener: (side: Side) => unknown): this;
+  peripheral: (side: Side) => unknown;
 
-  on(event: 'peripheral_detach', listener: (side: Side) => unknown): this;
+  peripheral_detach: (side: Side) => unknown;
 
-  on(
-    event: 'rednet_message',
-    listener: (sender: number, message: JsonTypes, protocol: string) => unknown
-  ): this;
+  rednet_message: (
+    sender: number,
+    message: JsonTypes,
+    protocol: string
+  ) => unknown;
 
-  on(event: 'redstone', listener: () => unknown): this;
+  redstone: () => unknown;
 
-  on(event: 'speaker_audio_empty', listener: (name: string) => unknown): this;
+  speaker_audio_empty: (name: string) => unknown;
 
-  on(
-    event: 'task_complete',
-    listener: (
-      id: number,
-      success: boolean,
-      err: string,
-      ...params: string[]
-    ) => unknown
-  ): this;
+  task_complete: (
+    id: number,
+    success: boolean,
+    err: string,
+    ...params: string[]
+  ) => unknown;
 
-  on(event: 'term_resize', listener: () => unknown): this;
+  term_resize: () => unknown;
 
-  on(event: 'terminate', listener: () => unknown): this;
+  terminate: () => unknown;
 
-  on(event: 'timer', listener: (id: number) => unknown): this;
+  timer: (id: number) => unknown;
 
-  on(event: 'turtle_inventory', listener: () => unknown): this;
+  turtle_inventory: () => unknown;
 }
 
-export default BaseEvents;
+export default ComputerEvents;

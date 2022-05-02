@@ -4,7 +4,19 @@ import ComputerEvents from './Interfaces/ComputerEvents';
 import * as Globals from './Globals';
 import ws from 'ws';
 
-class Computer extends EventEmitter implements ComputerEvents {
+type ValueOf<T> = T[keyof T];
+type ComputerEventValues = Parameters<ValueOf<ComputerEvents>>;
+interface Computer {
+  on<U extends keyof ComputerEvents>(
+    event: U, listener: ComputerEvents[U]
+  ): this;
+
+  emit<U extends keyof ComputerEvents>(
+    event: U, ...args: Parameters<ComputerEvents[U]>
+  ): boolean;
+}
+
+class Computer extends EventEmitter {
   socket: ws.WebSocket;
 
   /**
@@ -24,16 +36,16 @@ class Computer extends EventEmitter implements ComputerEvents {
 
     this.init = (async function (self) {
       // Request global variables
-      const _HOST = self.eval('_HOST').then((out: [string]) => out);
+      const _HOST = self.get('_HOST').then((out: [string]) => out[0]);
       const _CC_DEFAULT_SETTINGS = self
-        .eval('_CC_DEFAULT_SETTINGS')
-        .then((out: [string]) => out);
+        .get('_CC_DEFAULT_SETTINGS')
+        .then((out: [string]) => out[0]);
 
       // Create globals
 
       // Assign global variables
-      self._HOST = (await _HOST)[0];
-      self._CC_DEFAULT_SETTINGS = (await _CC_DEFAULT_SETTINGS)[0];
+      self._HOST = await _HOST;
+      self._CC_DEFAULT_SETTINGS = await _CC_DEFAULT_SETTINGS;
       return;
     })(this);
 
@@ -51,13 +63,15 @@ class Computer extends EventEmitter implements ComputerEvents {
     });
 
     // Event handler
-    this.#nonces.set('!event', async (eventName: string, data: JsonTypes[]) => {
-      if (!eventName) {
-        // No event name... Either "redstone" "term_resize" or "turtle_inventory"
-        return;
-      }
+    this.#nonces.set('!event', async (eventName: keyof ComputerEvents, data: ComputerEventValues|Record<string, never>) => {
+        if (!Array.isArray(data)) data = [];
 
-      this.emit(eventName, ...data);
+        // Peripheral handler
+        if (eventName == 'peripheral') {
+          // Detect and wrap peripheral
+        }
+
+        this.emit(eventName, ...data);
     });
 
     // Callback handler
@@ -70,10 +84,11 @@ class Computer extends EventEmitter implements ComputerEvents {
         arg: JsonTypes[] | Record<string, never>
       ) => {
         if (!Array.isArray(arg)) arg = new Array<JsonTypes>();
+
         if (action == 'req' && this.#callbacks.has(cbId)) {
           const out = await this.#callbacks.get(cbId)(...arg);
           this.socket.send(JSON.stringify(['!callback', 'res', cbNonce, out]));
-        } else if (action == 'create') this.#remoteCallbacks.push(cbId);
+        }
       }
     );
   }
@@ -82,28 +97,31 @@ class Computer extends EventEmitter implements ComputerEvents {
     string,
     (...data: JsonTypes[]) => JsonTypes[] | Promise<JsonTypes[]>
   >();
-  #remoteCallbacks = new Array<string>();
   #nonces = new Map<string, (...data: JsonTypes[]) => unknown>();
-  #generateNonce(map: Map<string, unknown>, minLength = 1): string {
+  #generateNonce(map: Map<string, unknown>, length = 1): string {
     // Declare all characters
     const chars =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-    // Detect if the minLength is enough
-    const maxCount = Math.pow(chars.length, minLength);
-    if (map.size >= maxCount) return this.#generateNonce(map, minLength + 1);
+    // Trim map down for length detection
+    const lengthArray = Array.from(map).filter((a) => a[0].length == length);
+
+    // Detect if the length is enough
+    const maxCount = Math.pow(chars.length, length);
+    if (lengthArray.length >= maxCount)
+      return this.#generateNonce(map, length + 1);
 
     // Pick characers randomly
     let nonce = '';
-    for (let i = 0; i < minLength; i++)
+    for (let i = 0; i < length; i++)
       nonce += chars.charAt(Math.floor(Math.random() * chars.length));
 
     // Loop if the nonce already exists
-    if (this.#nonces.has(nonce)) return this.#generateNonce(map, minLength);
+    if (this.#nonces.has(nonce)) return this.#generateNonce(map, length);
     else return nonce;
   }
 
-  eval(commandString: string, multiLine = false) {
+  eval(code: string, ...arg: JsonTypes[]) {
     return new Promise<JsonTypes[]>((resolve, reject) => {
       // Create nonce callback before execution
       const nonce = this.#generateNonce(this.#nonces);
@@ -115,30 +133,40 @@ class Computer extends EventEmitter implements ComputerEvents {
 
       // Execute command
       this.socket.send(
-        JSON.stringify([nonce, `${multiLine ? '' : 'return '}${commandString}`])
+        JSON.stringify([
+          nonce,
+          `return function(...)\nreturn function()\n${code}\nend\nend`,
+          arg,
+        ])
       );
     });
   }
 
-  runCallback(cbId: string, ...arg: JsonTypes[]) {
-    return new Promise<JsonTypes[]>((resolve) => {
-      // Create nonce callback before calling
-      const nonce = this.#generateNonce(this.#nonces);
-      this.#nonces.set(nonce, (...data: JsonTypes[]) => resolve(data));
+  run(func: string, ...arg: JsonTypes[]) {
+    return this.eval(`return ${func}(table.unpack(arg))`, ...arg);
+  }
+  get(val: string, ...arg: JsonTypes[]) {
+    return this.eval(`return ${val}`, ...arg);
+  }
 
-      // Execute callback
-      this.socket.send(JSON.stringify(['!callback', 'req', nonce, cbId, arg]));
-    });
+  runCallback(cbId: string, ...arg: JsonTypes[]) {
+    return this.run(`_G.Callbacks["${cbId}"]`, ...arg);
   }
 
   callback(
     cb: (...arg: JsonTypes[]) => JsonTypes[] | Promise<JsonTypes[]>
-  ): Promise<string> {
+  ): Promise<{ id: string; pointer: string; delete: () => void }> {
     return new Promise((resolve) => {
       const cbNonce = this.#generateNonce(this.#nonces);
       const cbId = this.#generateNonce(this.#callbacks);
 
-      this.#nonces.set(cbNonce, () => resolve(cbId));
+      this.#nonces.set(cbNonce, () =>
+        resolve({
+          id: cbId,
+          pointer: `_G.RemoteCallbacks["${cbId}"]`,
+          delete: () => this.#callbacks.delete(cbId),
+        })
+      );
       this.socket.send(JSON.stringify(['!callback', 'create', cbNonce, cbId]));
       this.#callbacks.set(cbId, cb);
     });
@@ -168,7 +196,7 @@ class Computer extends EventEmitter implements ComputerEvents {
    * @see OS.startTimer
    */
   async sleep(time: number): Promise<void> {
-    await this.eval(`sleep(${time})`);
+    await this.run(`sleep`, time);
     return null;
   }
 
@@ -180,9 +208,7 @@ class Computer extends EventEmitter implements ComputerEvents {
    * @see Base.print A wrapper around write that adds a newline and accepts multiple arguments
    */
   async write(text: string): Promise<number> {
-    const out = await this.eval(`write(${paramify(text)})`).then(
-      (out: [number]) => out
-    );
+    const out = await this.run(`write`, text).then((out: [number]) => out);
     return out[0];
   }
 
@@ -193,9 +219,7 @@ class Computer extends EventEmitter implements ComputerEvents {
    * @example computer.print("Hello, world!")
    */
   async print(...data: JsonTypes[]): Promise<number> {
-    const out = await this.eval(`print(${toParams(...data)})`).then(
-      (out: [number]) => out
-    );
+    const out = await this.run(`print`, ...data).then((out: [number]) => out);
     return out[0];
   }
 
@@ -205,7 +229,7 @@ class Computer extends EventEmitter implements ComputerEvents {
    * @example computer.printError("Something went wrong!")
    */
   async printError(...data: JsonTypes[]): Promise<void> {
-    await this.eval(`printError(${toParams(...data)})`, true);
+    await this.run(`printError`, ...data);
     return null;
   }
 
@@ -242,23 +266,25 @@ class Computer extends EventEmitter implements ComputerEvents {
   async read(
     replaceChar?: string,
     history?: JsonTypes[],
-    completeFn?: string | ((partial: string) => string[] | Promise<string[]>),
+    completeFn?: (partial: string) => string[] | Promise<string[]>,
     defaultText?: string
   ) {
-    return this.eval(
-      `read(${toParams(replaceChar, history)}, ${
-        completeFn
-          ? typeof completeFn == 'string'
-            ? `function(partial)\n${completeFn}\nend`
-            : `RemoteCallbacks[${paramify(
-                await this.callback(
-                  // Auto-format the output into an array
-                  async (partial: string) => [await completeFn(partial)]
-                )
-              )}]`
-          : null
-      }, ${paramify(defaultText)})`
+    let callback;
+    if (completeFn)
+      callback = await this.callback(
+        // Auto-format the output into an array
+        async (partial: string) => [await completeFn(partial)]
+      );
+
+    const out = await this.eval(
+      `return read(arg[1], arg[2], ${callback?callback.pointer:'nil'}, arg[3])`,
+      replaceChar,
+      history,
+      defaultText
     ).then((out: [string]) => out[0]);
+
+    callback.delete();
+    return out;
   }
 }
 

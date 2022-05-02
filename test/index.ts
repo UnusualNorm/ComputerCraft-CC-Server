@@ -7,8 +7,11 @@ const server = new CCServer();
 
 server.on('connection', async (computer) => {
   console.log('Computer has connected!');
-  await testBase(computer);
-  await testColor(computer);
+  computer.on('alarm', (id) => {
+    id
+  })
+  testBase(computer);
+  testColor(computer);
 });
 
 server.listen(port);
