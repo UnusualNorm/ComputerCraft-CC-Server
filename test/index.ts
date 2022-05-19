@@ -8,8 +8,8 @@ const server = new CCServer();
 server.on('connection', async (computer) => {
   console.log('Computer has connected!');
   computer.on('alarm', (id) => {
-    id
-  })
+    id;
+  });
   testBase(computer);
   testColor(computer);
 });

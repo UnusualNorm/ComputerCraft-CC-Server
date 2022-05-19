@@ -8,11 +8,13 @@ type ValueOf<T> = T[keyof T];
 type ComputerEventValues = Parameters<ValueOf<ComputerEvents>>;
 interface Computer {
   on<U extends keyof ComputerEvents>(
-    event: U, listener: ComputerEvents[U]
+    event: U,
+    listener: ComputerEvents[U]
   ): this;
 
   emit<U extends keyof ComputerEvents>(
-    event: U, ...args: Parameters<ComputerEvents[U]>
+    event: U,
+    ...args: Parameters<ComputerEvents[U]>
   ): boolean;
 }
 
@@ -22,32 +24,25 @@ class Computer extends EventEmitter {
   /**
    * @description The ComputerCraft and Minecraft version of the current computer environment.
    */
-  _HOST: string;
+  async _HOST(): Promise<string> {
+    const out = await this.get('_CC_DEFAULT_SETTINGS').then(
+      (out: [string]) => out
+    );
+    return out[0];
+  }
 
   /**
    * @description The default computer settings as defined in the ComputerCraft configuration.
    */
-  _CC_DEFAULT_SETTINGS: string;
+  async _CC_DEFAULT_SETTINGS(): Promise<string> {
+    const out = await this.get(`_HOST`).then((out: [string]) => out);
+    return out[0];
+  }
 
   init: Promise<void>;
   constructor(socket: ws.WebSocket) {
     super();
     this.socket = socket;
-
-    this.init = (async function (self) {
-      // Request global variables
-      const _HOST = self.get('_HOST').then((out: [string]) => out[0]);
-      const _CC_DEFAULT_SETTINGS = self
-        .get('_CC_DEFAULT_SETTINGS')
-        .then((out: [string]) => out[0]);
-
-      // Create globals
-
-      // Assign global variables
-      self._HOST = await _HOST;
-      self._CC_DEFAULT_SETTINGS = await _CC_DEFAULT_SETTINGS;
-      return;
-    })(this);
 
     socket.on('message', (rawMessage) => {
       // Parse the packet
@@ -63,7 +58,12 @@ class Computer extends EventEmitter {
     });
 
     // Event handler
-    this.#nonces.set('!event', async (eventName: keyof ComputerEvents, data: ComputerEventValues|Record<string, never>) => {
+    this.#nonces.set(
+      '!event',
+      async (
+        eventName: keyof ComputerEvents,
+        data: ComputerEventValues | Record<string, never>
+      ) => {
         if (!Array.isArray(data)) data = [];
 
         // Peripheral handler
@@ -72,7 +72,8 @@ class Computer extends EventEmitter {
         }
 
         this.emit(eventName, ...data);
-    });
+      }
+    );
 
     // Callback handler
     this.#nonces.set(
@@ -277,7 +278,9 @@ class Computer extends EventEmitter {
       );
 
     const out = await this.eval(
-      `return read(arg[1], arg[2], ${callback?callback.pointer:'nil'}, arg[3])`,
+      `return read(arg[1], arg[2], ${
+        callback ? callback.pointer : 'nil'
+      }, arg[3])`,
       replaceChar,
       history,
       defaultText

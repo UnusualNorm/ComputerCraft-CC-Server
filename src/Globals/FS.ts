@@ -130,9 +130,7 @@ class FS extends Global {
       .then((out: [string]) => out[0]);
   }
 
-  async attributes(
-    path: string
-  ): Promise<
+  async attributes(path: string): Promise<
     | string
     | {
         size: number;

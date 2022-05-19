@@ -2,15 +2,16 @@ import { Computer, CCLua } from '../src/index';
 import _ from 'underscore';
 
 export default async function testBase(computer: Computer) {
-  // INIT TESTING
-  computer.init
-    .then(() => {
-      console.log('Computer _HOST:', computer._HOST);
-      console.log(
-        'Computer _CC_DEFAULT_SETTINGS:',
-        computer._CC_DEFAULT_SETTINGS
-      );
-    })
+  // _HOST TESTING
+  computer
+    ._HOST()
+    .then((host) => console.log('Computer _HOST:', host))
+    .catch(console.error);
+    
+  // _CC_DEFAULT_SETTINGS
+  computer
+    ._CC_DEFAULT_SETTINGS()
+    .then((settings) => console.log('Computer _CC_DEFAULT_SETTINGS:', settings))
     .catch(console.error);
 
   // EVAL TESTING
