@@ -1,4 +1,4 @@
-import { JsonTypes, paramify, toParams } from './Interfaces/CCLua';
+import { JsonTypes } from './Interfaces/CCLua';
 import EventEmitter from 'events';
 import ComputerEvents from './Interfaces/ComputerEvents';
 import * as Globals from './Globals';
@@ -24,20 +24,16 @@ class Computer extends EventEmitter {
   /**
    * @description The ComputerCraft and Minecraft version of the current computer environment.
    */
-  async _HOST(): Promise<string> {
-    const out = await this.get('_CC_DEFAULT_SETTINGS').then(
-      (out: [string]) => out
-    );
-    return out[0];
-  }
+  readonly _HOST: Promise<string> = this.get(`_HOST`).then(
+    (out: [string]) => out[0]
+  );
 
   /**
    * @description The default computer settings as defined in the ComputerCraft configuration.
    */
-  async _CC_DEFAULT_SETTINGS(): Promise<string> {
-    const out = await this.get(`_HOST`).then((out: [string]) => out);
-    return out[0];
-  }
+  readonly _CC_DEFAULT_SETTINGS: Promise<string> = this.get(
+    `_CC_DEFAULT_SETTINGS`
+  ).then((out: [string]) => out[0]);
 
   init: Promise<void>;
   constructor(socket: ws.WebSocket) {

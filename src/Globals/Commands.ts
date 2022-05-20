@@ -1,6 +1,6 @@
 import GlobalBase, { VariableGlobalBase } from './Base';
 import Computer from '../Computer';
-import { paramify, toParams } from '../Interfaces/CCLua';
+import { BlockInfo } from '../Interfaces/CCLua';
 
 class AsyncCommands extends GlobalBase {}
 
@@ -20,32 +20,35 @@ class Commands extends VariableGlobalBase {
     command: string
   ): Promise<{ success: boolean; output: string[]; affected: number }> {
     const out = await this.computer
-      .eval(`commands.exec(${paramify(command)})`)
+      .run(`commands.exec`, command)
       .then((out: [boolean, string[], number]) => out);
 
     return { success: out[0], output: out[1], affected: out[2] };
   }
 
   async execAsync(command: string) {
-    return this.computer
-      .eval(`commands.execAsync(${paramify(command)})`)
-      .then((out: [number]) => out[0]);
+    const out = await this.computer
+      .run(`commands.execAsync`, command)
+      .then((out: [number]) => out);
+    return out[0];
   }
 
   async list(...commands: string[]): Promise<string[]> {
-    return this.computer
-      .eval(`commands.list(${toParams(...commands)})`)
-      .then((out: [string[]]) => out[0]);
+    const out = await this.computer
+      .eval(`commands.list`, ...commands)
+      .then((out: [string[]]) => out);
+    return out[0];
   }
 
   async getBlockPosition() {
-    return this.computer
-      .eval('commands.getBlockPosition()')
-      .then((out: [number, number, number]) => ({
-        x: out[0],
-        y: out[1],
-        z: out[2],
-      }));
+    const out = await this.computer
+      .run('commands.getBlockPosition')
+      .then((out: [number, number, number]) => out);
+    return {
+      x: out[0],
+      y: out[1],
+      z: out[2],
+    };
   }
 
   async getBlockInfos(
@@ -57,19 +60,26 @@ class Commands extends VariableGlobalBase {
     maxZ: number,
     dimension?: string
   ) {
-    return this.computer
-      .eval(
-        `commands.getBlockInfos(${minX}, ${minY}, ${minZ}, ${maxX}, ${maxY}, ${maxZ}, ${paramify(
-          dimension
-        )})`
+    const out = await this.computer
+      .run(
+        `commands.getBlockInfos`,
+        minX,
+        minY,
+        minZ,
+        maxX,
+        maxY,
+        maxZ,
+        dimension
       )
-      .then((out: [Record<string, unknown>[]]) => out[0]);
+      .then((out: [BlockInfo[]]) => out);
+    return out[0];
   }
 
   async getBlockInfo(x: number, y: number, z: number, dimension?: string) {
-    return this.computer
-      .eval(`commands.getBlockInfos(${x}, ${y}, ${z}, ${paramify(dimension)})`)
-      .then((out: [Record<string, unknown>]) => out[0]);
+    const out = await this.computer
+      .run(`commands.getBlockInfos`, x, y, z, dimension)
+      .then((out: [BlockInfo]) => out);
+    return out[0];
   }
 }
 

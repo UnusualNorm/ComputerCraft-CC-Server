@@ -1,5 +1,4 @@
 import Global from './Base';
-import { toParams } from '../Interfaces/CCLua';
 
 interface Colouors {
   /**

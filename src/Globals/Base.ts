@@ -20,9 +20,9 @@ export class VariableGlobalBase extends GlobalBase {
   readonly variableName: string;
   async load() {
     const hasVar = await this.computer
-      .eval(this.variableName, true)
-      .then((out: [JsonTypes]) => (out[0] != null ? true : false));
-    this.loaded = hasVar;
-    return hasVar;
+      .eval(`${this.variableName} ~= nil`)
+      .then((out: [boolean]) => out);
+    this.loaded = hasVar[0];
+    return hasVar[0];
   }
 }
