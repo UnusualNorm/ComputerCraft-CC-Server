@@ -90,6 +90,14 @@ class Computer extends EventEmitter {
     );
   }
 
+  readonly globals = {
+    colors: new Globals.Colors(this),
+    colours: new Globals.Colours(this),
+    commands: new Globals.Commands(this),
+    disk: new Globals.Disk(this),
+    fs: new Globals.FS(this),
+  };
+
   #callbacks = new Map<
     string,
     (...data: JsonTypes[]) => JsonTypes[] | Promise<JsonTypes[]>

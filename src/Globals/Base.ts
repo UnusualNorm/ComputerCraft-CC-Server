@@ -1,16 +1,15 @@
 import Computer from '../Computer';
-import { JsonTypes } from '../Interfaces/CCLua';
 
 export default class GlobalBase {
   readonly computer: Computer;
   public init: Promise<boolean>;
-  constructor(Computer: Computer) {
-    this.computer = Computer;
-    this.init = this.load();
+  constructor(computer: Computer) {
+    this.computer = computer;
+    this.init = this.check();
   }
 
   public loaded: boolean;
-  async load() {
+  async check() {
     this.loaded = true;
     return true;
   }
@@ -18,7 +17,7 @@ export default class GlobalBase {
 
 export class VariableGlobalBase extends GlobalBase {
   readonly variableName: string;
-  async load() {
+  async check() {
     const hasVar = await this.computer
       .eval(`${this.variableName} ~= nil`)
       .then((out: [boolean]) => out);

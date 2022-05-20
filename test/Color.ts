@@ -1,8 +1,7 @@
-import { Computer, Globals } from '../src/index';
-const { Colors } = Globals;
+import { Computer } from '../src/index';
 
 export default async function testColor(computer: Computer) {
-  const colors = new Colors(computer);
+  const { colors } = computer.globals;
 
   // COMBINE TESTING
   colors
