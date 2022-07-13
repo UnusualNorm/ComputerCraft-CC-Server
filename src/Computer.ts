@@ -1,24 +1,14 @@
-import { JsonTypes } from './Interfaces/CCLua';
 import EventEmitter from 'events';
-import ComputerEvents from './Interfaces/ComputerEvents';
-import * as Globals from './Globals';
 import ws from 'ws';
+import {
+  FunctionMask,
+  NetworkedCallback,
+  NetworkedTypes,
+  NetworkOutputs,
+} from './Types/Computer';
+import { CommonTypes } from './Types/ComputerCraft';
 
-type ValueOf<T> = T[keyof T];
-type ComputerEventValues = Parameters<ValueOf<ComputerEvents>>;
-interface Computer {
-  on<U extends keyof ComputerEvents>(
-    event: U,
-    listener: ComputerEvents[U]
-  ): this;
-
-  emit<U extends keyof ComputerEvents>(
-    event: U,
-    ...args: Parameters<ComputerEvents[U]>
-  ): boolean;
-}
-
-class Computer extends EventEmitter {
+class Computer extends EventEmitter implements Computer {
   socket: ws.WebSocket;
 
   /**
@@ -35,146 +25,250 @@ class Computer extends EventEmitter {
     `_CC_DEFAULT_SETTINGS`
   ).then((out: [string]) => out[0]);
 
-  init: Promise<void>;
   constructor(socket: ws.WebSocket) {
     super();
     this.socket = socket;
 
-    socket.on('message', (rawMessage) => {
-      // Parse the packet
-      const message = rawMessage.toString();
-      const [nonce, ...data]: [string, ...JsonTypes[]] = JSON.parse(message);
+    socket.on('message', async (rawMessageData) => {
+      const rawMessage = rawMessageData.toString();
+      const message: NetworkOutputs = JSON.parse(rawMessage);
 
-      // Run the callback
-      if (!this.#nonces.has(nonce)) return;
-      this.#nonces.get(nonce)(...data);
+      switch (message[0]) {
+        case 'eval': {
+          const [, nonce, success, output, outputMask] = message;
+          const args = this.#unpackArrayValues(output, outputMask);
+          const callback = this.#evalRequests.get(nonce);
+          if (callback) {
+            callback(success, args);
+            this.#evalRequests.delete(nonce);
+          }
+          break;
+        }
+        case 'callback': {
+          if (message[1] == 'req') {
+            const [, , nonce, id, arg, argMask] = message;
+            const callback = this.#callbacks.get(id);
+            if (callback) {
+              const args = this.#unpackArrayValues(arg, argMask);
+              const result = await callback(...args);
+              const [output, outputMask] = await this.#packArrayValues(result);
 
-      // Delete the callback if it is not reserved
-      if (!nonce.startsWith('!')) this.#nonces.delete(nonce);
+              this.socket.send(
+                JSON.stringify(['callback', 'res', nonce, output, outputMask])
+              );
+            }
+          }
+          if (message[1] == 'res') {
+            const [, , nonce, output, outputMask] = message;
+            const callback = this.#callbackRequests.get(nonce);
+            if (callback) {
+              const args = this.#unpackArrayValues(output, outputMask);
+              callback(...args);
+              this.#callbackRequests.delete(nonce);
+            }
+          }
+          break;
+        }
+      }
     });
-
-    // Event handler
-    this.#nonces.set(
-      '!event',
-      async (
-        eventName: keyof ComputerEvents,
-        data: ComputerEventValues | Record<string, never>
-      ) => {
-        if (!Array.isArray(data)) data = [];
-
-        // Peripheral handler
-        if (eventName == 'peripheral') {
-          // Detect and wrap peripheral
-        }
-
-        this.emit(eventName, ...data);
-      }
-    );
-
-    // Callback handler
-    this.#nonces.set(
-      '!callback',
-      async (
-        action: string,
-        cbNonce: string,
-        cbId: string,
-        arg: JsonTypes[] | Record<string, never>
-      ) => {
-        if (!Array.isArray(arg)) arg = new Array<JsonTypes>();
-
-        if (action == 'req' && this.#callbacks.has(cbId)) {
-          const out = await this.#callbacks.get(cbId)(...arg);
-          this.socket.send(JSON.stringify(['!callback', 'res', cbNonce, out]));
-        }
-      }
-    );
   }
 
-  readonly globals = {
-    colors: new Globals.Colors(this),
-    colours: new Globals.Colours(this),
-    commands: new Globals.Commands(this),
-    disk: new Globals.Disk(this),
-    fs: new Globals.FS(this),
-  };
-
-  #callbacks = new Map<
+  #evalRequests = new Map<
     string,
-    (...data: JsonTypes[]) => JsonTypes[] | Promise<JsonTypes[]>
+    (success: boolean, output: NetworkedTypes[]) => unknown
   >();
-  #nonces = new Map<string, (...data: JsonTypes[]) => unknown>();
+  #callbacks = new Map<string, NetworkedCallback>();
+  #callbackRequests = new Map<string, (...args: NetworkedTypes[]) => unknown>();
   #generateNonce(map: Map<string, unknown>, length = 1): string {
-    // Declare all characters
     const chars =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-    // Trim map down for length detection
     const lengthArray = Array.from(map).filter((a) => a[0].length == length);
 
-    // Detect if the length is enough
     const maxCount = Math.pow(chars.length, length);
     if (lengthArray.length >= maxCount)
       return this.#generateNonce(map, length + 1);
 
-    // Pick characers randomly
     let nonce = '';
     for (let i = 0; i < length; i++)
       nonce += chars.charAt(Math.floor(Math.random() * chars.length));
 
-    // Loop if the nonce already exists
-    if (this.#nonces.has(nonce)) return this.#generateNonce(map, length);
+    if (map.has(nonce)) return this.#generateNonce(map, length);
     else return nonce;
   }
 
-  eval(code: string, ...arg: JsonTypes[]) {
-    return new Promise<JsonTypes[]>((resolve, reject) => {
-      // Create nonce callback before execution
-      const nonce = this.#generateNonce(this.#nonces);
-      this.#nonces.set(nonce, (success: boolean, data: JsonTypes[]) => {
-        // Usually the first output determines success
-        if (success) resolve(data);
-        else reject(data[0]);
+  eval(code: string, ...arg: NetworkedTypes[]) {
+    return this.rawEval(`return function(...) \n${code}\n end`, ...arg);
+  }
+
+  async rawEval(code: string, ...arg: NetworkedTypes[]) {
+    const [values, mask] = await this.#packArrayValues(arg);
+
+    return new Promise<NetworkedTypes[]>((resolve, reject) => {
+      const nonce = this.#generateNonce(this.#evalRequests);
+      this.#evalRequests.set(nonce, async (success, output) => {
+        if (success) resolve(output);
+        else reject(output[0]);
       });
 
-      // Execute command
       this.socket.send(
         JSON.stringify([
+          'eval',
           nonce,
-          `return function(...)\nreturn function()\n${code}\nend\nend`,
-          arg,
+          code,
+          values,
+          mask,
         ])
       );
     });
   }
 
-  run(func: string, ...arg: JsonTypes[]) {
-    return this.eval(`return ${func}(table.unpack(arg))`, ...arg);
+  run(func: string, ...arg: NetworkedTypes[]) {
+    return this.rawEval(
+      `return ${func}`,
+      ...arg
+    );
   }
-  get(val: string, ...arg: JsonTypes[]) {
-    return this.eval(`return ${val}`, ...arg);
+  get(val: string) {
+    return this.eval(`return ${val}`);
   }
 
-  runCallback(cbId: string, ...arg: JsonTypes[]) {
-    return this.run(`_G.Callbacks["${cbId}"]`, ...arg);
+  #runCallback(cbId: string, ...arg: NetworkedTypes[]) {
+    return this.rawEval(`return _G.Callbacks[${JSON.stringify(cbId)}]`, ...arg);
   }
 
-  callback(
-    cb: (...arg: JsonTypes[]) => JsonTypes[] | Promise<JsonTypes[]>
-  ): Promise<{ id: string; pointer: string; delete: () => void }> {
-    return new Promise((resolve) => {
-      const cbNonce = this.#generateNonce(this.#nonces);
-      const cbId = this.#generateNonce(this.#callbacks);
+  #callback(cbId: string) {
+    return (...arg: NetworkedTypes[]) => {
+      return this.#runCallback(cbId, ...arg);
+    };
+  }
 
-      this.#nonces.set(cbNonce, () =>
-        resolve({
-          id: cbId,
-          pointer: `_G.RemoteCallbacks["${cbId}"]`,
-          delete: () => this.#callbacks.delete(cbId),
-        })
+  #createCallback(callback: NetworkedCallback): Promise<string> {
+    return new Promise<string>((resolve) => {
+      const nonce = this.#generateNonce(this.#callbackRequests);
+      const callbackId = this.#generateNonce(this.#callbacks);
+
+      this.socket.send(
+        JSON.stringify([
+          'callback',
+          'create',
+          nonce,
+          callbackId,
+        ])
       );
-      this.socket.send(JSON.stringify(['!callback', 'create', cbNonce, cbId]));
-      this.#callbacks.set(cbId, cb);
+
+      this.#callbackRequests.set(nonce, () => resolve(callbackId));
+      this.#callbacks.set(callbackId, callback);
     });
+  }
+
+  async #packArrayValues(
+    data: NetworkedTypes[]
+  ): Promise<[NetworkedTypes[], FunctionMask[]]> {
+    const values: NetworkedTypes[] = [];
+    const mask: FunctionMask[] = [];
+
+    for (const item of data) {
+      if (typeof item === 'function') {
+        values.push(await this.#createCallback(item));
+        mask.push(true);
+      } else if (typeof item === 'object') {
+        if (Array.isArray(item)) {
+          const [arrayValues, arrayMask] = await this.#packArrayValues(item);
+          values.push(arrayValues);
+          mask.push(arrayMask);
+        } else {
+          const [objectValues, objectMask] = await this.#packObjectValues(item);
+          values.push(objectValues);
+          mask.push(objectMask);
+        }
+      } else {
+        values.push(item);
+        mask.push(false);
+      }
+    }
+    return [values, mask];
+  }
+
+  async #packObjectValues(
+    data: Record<string, NetworkedTypes>
+  ): Promise<[Record<string, NetworkedTypes>, Record<string, FunctionMask>]> {
+    const values: Record<string, NetworkedTypes> = {};
+    const mask: Record<string, FunctionMask> = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      if (typeof value === 'function') {
+        values[key] = await this.#createCallback(value);
+        mask[key] = true;
+      } else if (typeof value === 'object') {
+        if (Array.isArray(value)) {
+          const [arrayValues, arrayMask] = await this.#packArrayValues(value);
+          values[key] = arrayValues;
+          mask[key] = arrayMask;
+        } else {
+          const [objectValues, objectMask] = await this.#packObjectValues(
+            value
+          );
+          values[key] = objectValues;
+          mask[key] = objectMask;
+        }
+      } else {
+        values[key] = value;
+        mask[key] = false;
+      }
+    }
+
+    return [values, mask];
+  }
+
+  #unpackArrayValues(
+    data: CommonTypes[]|Record<string, never>,
+    mask: FunctionMask[]|Record<string, never>
+  ): NetworkedTypes[] {
+    if (!Array.isArray(data)) data = [];
+    if (!Array.isArray(mask)) mask = [];
+
+    const values: NetworkedTypes[] = [];
+
+    for (const [i, item] of data.entries()) {
+      const itemMask = mask[i];
+      if (typeof item == 'string' && mask[i]) {
+        values.push(this.#callback(item));
+      } else if (typeof item == 'object' && typeof itemMask == 'object') {
+        if (Array.isArray(item) && Array.isArray(itemMask)) {
+          values.push(this.#unpackArrayValues(item, itemMask));
+        } else if (!Array.isArray(item) && !Array.isArray(itemMask)) {
+          values.push(this.#unpackObjectValues(item, itemMask));
+        }
+      } else {
+        values.push(item);
+      }
+    }
+
+    return values;
+  }
+
+  #unpackObjectValues(
+    data: Record<string, CommonTypes>,
+    mask: Record<string, FunctionMask>
+  ): Record<string, NetworkedTypes> {
+    const values: Record<string, NetworkedTypes> = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      const itemMask = mask[key];
+      if (typeof value == 'string' && mask[key]) {
+        values[key] = this.#callback(value);
+      } else if (typeof value == 'object' && typeof itemMask == 'object') {
+        if (Array.isArray(value) && Array.isArray(itemMask)) {
+          values[key] = this.#unpackArrayValues(value, itemMask);
+        } else if (!Array.isArray(value) && !Array.isArray(itemMask)) {
+          values[key] = this.#unpackObjectValues(value, itemMask);
+        }
+      } else {
+        values[key] = value;
+      }
+    }
+
+    return values;
   }
 
   /**
@@ -210,7 +304,7 @@ class Computer extends EventEmitter {
    * @param text The text to write to the string
    * @returns The number of lines written
    * @example computer.write("Hello, world")
-   * @see Base.print A wrapper around write that adds a newline and accepts multiple arguments
+   * @see Computer.print A wrapper around write that adds a newline and accepts multiple arguments
    */
   async write(text: string): Promise<number> {
     const out = await this.run(`write`, text).then((out: [number]) => out);
@@ -223,7 +317,7 @@ class Computer extends EventEmitter {
    * @returns The number of lines written
    * @example computer.print("Hello, world!")
    */
-  async print(...data: JsonTypes[]): Promise<number> {
+  async print(...data: CommonTypes[]): Promise<number> {
     const out = await this.run(`print`, ...data).then((out: [number]) => out);
     return out[0];
   }
@@ -233,9 +327,9 @@ class Computer extends EventEmitter {
    * @param data The values to print on the screen
    * @example computer.printError("Something went wrong!")
    */
-  async printError(...data: JsonTypes[]): Promise<void> {
+  async printError(...data: CommonTypes[]): Promise<void> {
     await this.run(`printError`, ...data);
-    return null;
+    return;
   }
 
   /**
@@ -270,27 +364,17 @@ class Computer extends EventEmitter {
    */
   async read(
     replaceChar?: string,
-    history?: JsonTypes[],
+    history?: CommonTypes[],
     completeFn?: (partial: string) => string[] | Promise<string[]>,
     defaultText?: string
   ) {
-    let callback;
-    if (completeFn)
-      callback = await this.callback(
-        // Auto-format the output into an array
-        async (partial: string) => [await completeFn(partial)]
-      );
-
-    const out = await this.eval(
-      `return read(arg[1], arg[2], ${
-        callback ? callback.pointer : 'nil'
-      }, arg[3])`,
+    const out = await this.run(
+      `read`,
       replaceChar,
       history,
+      async (partial: string) => [await completeFn(partial)],
       defaultText
     ).then((out: [string]) => out[0]);
-
-    callback.delete();
     return out;
   }
 }

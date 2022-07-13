@@ -1,11 +1,11 @@
-import GlobalBase, { VariableGlobalBase } from './Base';
+import GlobalBase from './Base';
 import Computer from '../Computer';
-import { BlockInfo } from '../Interfaces/CCLua';
+import { BlockInfo } from '../Types/ComputerCraft';
 
 class AsyncCommands extends GlobalBase {}
 
-class Commands extends VariableGlobalBase {
-  readonly variableName = 'commands';
+class Commands extends GlobalBase {
+  readonly id = 'commands';
 
   constructor(Computer: Computer) {
     super(Computer);

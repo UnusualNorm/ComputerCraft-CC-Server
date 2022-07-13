@@ -2,26 +2,15 @@ import Computer from '../Computer';
 
 export default class GlobalBase {
   readonly computer: Computer;
-  public init: Promise<boolean>;
+  readonly id: string;
+
   constructor(computer: Computer) {
     this.computer = computer;
-    this.init = this.check();
   }
 
-  public loaded: boolean;
-  async check() {
-    this.loaded = true;
-    return true;
-  }
-}
-
-export class VariableGlobalBase extends GlobalBase {
-  readonly variableName: string;
-  async check() {
-    const hasVar = await this.computer
-      .eval(`${this.variableName} ~= nil`)
-      .then((out: [boolean]) => out);
-    this.loaded = hasVar[0];
-    return hasVar[0];
+  async exists() {
+    return this.computer
+      .eval(`if ${this.id} then return true else return false end`)
+      .then((out: [boolean]) => out[0]);
   }
 }

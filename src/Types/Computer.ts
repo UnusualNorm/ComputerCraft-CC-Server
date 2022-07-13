@@ -1,6 +1,7 @@
-import { JsonTypes, Side } from './CCLua';
+import { ValueOf } from '.';
+import { CommonTypes, Side } from './ComputerCraft';
 
-declare interface ComputerEvents {
+export interface ComputerEvents {
   /**
    * @description The timer event is fired when an alarm started with os.setAlarm completes.
    * @returns The ID of the alarm that finished.
@@ -71,7 +72,7 @@ declare interface ComputerEvents {
     side: Side,
     channel: number,
     replyChannel: number,
-    message: JsonTypes,
+    message: CommonTypes,
     distance: number
   ) => unknown;
 
@@ -97,7 +98,7 @@ declare interface ComputerEvents {
 
   rednet_message: (
     sender: number,
-    message: JsonTypes,
+    message: CommonTypes,
     protocol: string
   ) => unknown;
 
@@ -121,4 +122,64 @@ declare interface ComputerEvents {
   turtle_inventory: () => unknown;
 }
 
-export default ComputerEvents;
+export type ComputerEventValues = Parameters<ValueOf<ComputerEvents>>;
+export interface Computer {
+  on<U extends keyof ComputerEvents>(
+    event: U,
+    listener: ComputerEvents[U]
+  ): this;
+
+  emit<U extends keyof ComputerEvents>(
+    event: U,
+    ...args: Parameters<ComputerEvents[U]>
+  ): boolean;
+}
+
+export type NetworkedTypes =
+  | CommonTypes
+  | NetworkedCallback
+  | NetworkedTypes[]
+  | { [x: string]: NetworkedTypes };
+export type NetworkedCallback = (
+  ...args: NetworkedTypes[]
+) => NetworkedTypes[] | Promise<NetworkedTypes[]>;
+
+export type FunctionMask =
+  | boolean
+  | FunctionMask[]
+  | { [x: string]: FunctionMask };
+
+export type NetworkEvalOutput = [
+  'eval',
+  string,
+  boolean,
+  CommonTypes[],
+  FunctionMask[]
+];
+export type NetworkCallbackReqOutput = [
+  'callback',
+  'req',
+  string,
+  string,
+  CommonTypes[],
+  FunctionMask[]
+];
+export type NetworkCallbackResOutput = [
+  'callback',
+  'res',
+  string,
+  CommonTypes[],
+  FunctionMask[]
+];
+export type NetworkCallbackEventOutput = [
+  'event',
+  string,
+  CommonTypes[],
+  FunctionMask[]
+];
+
+export type NetworkOutputs =
+  | NetworkEvalOutput
+  | NetworkCallbackReqOutput
+  | NetworkCallbackResOutput
+  | NetworkCallbackEventOutput;

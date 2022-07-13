@@ -1,7 +1,9 @@
-import { Computer } from '../src/index';
+import { Computer, Colors } from '../src';
 
 export default async function testColor(computer: Computer) {
-  const { colors } = computer.globals;
+  const colors = new Colors(computer);
+  if (!(await colors.exists()))
+    return console.warn('Color module not found, unable to test.');
 
   // COMBINE TESTING
   colors

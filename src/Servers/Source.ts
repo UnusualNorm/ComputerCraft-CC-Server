@@ -12,12 +12,29 @@ function attachClientSource(server: http.Server, path = '/') {
   });
 }
 
-const sourcePath = path.join(__dirname, '../Client.lua');
+function attachClientUpdater(server: http.Server, sourcePath = '/', path = '/updater') {
+  server.on('request', (request, response) => {
+    if (request.url == path) {
+      const updaterSource = buildUpdaterSource(`${request.headers.host}${sourcePath}`);
+      response.writeHead(200);
+      response.end(updaterSource, 'utf-8');
+    }
+  });
+}
+
+const sourcePath = path.join(__dirname, '../Client/Client.lua');
+const updaterPath = path.join(__dirname, '../Client/Updater.lua');
 const clientSource = fs.readFileSync(sourcePath, { encoding: 'utf-8' });
+const updaterSource = fs.readFileSync(updaterPath, { encoding: 'utf-8' });
 
 function buildClientSource(host: string) {
   const connectionVariableDefinition = `_G.ConnectionURL = "${host}"`;
   return `${connectionVariableDefinition}\n${clientSource}`;
 }
 
-export { attachClientSource, buildClientSource };
+function buildUpdaterSource(source: string) {
+  const connectionVariableDefinition = `_G.ConnectionURL = "http://${source}"`;
+  return `${connectionVariableDefinition}\n${updaterSource}`;
+}
+
+export { attachClientSource, attachClientUpdater, buildClientSource, buildUpdaterSource };

@@ -1,5 +1,6 @@
-import { Computer, CCLua } from '../src/index';
+import { CommonTypes, Computer } from '../src';
 import _ from 'underscore';
+import { NetworkedCallback } from '../src/Types/Computer';
 
 export default async function testBase(computer: Computer) {
   // _HOST TESTING
@@ -13,7 +14,7 @@ export default async function testBase(computer: Computer) {
     .catch(console.error);
 
   // EVAL TESTING
-  const evalData: CCLua.JsonTypes[] = [
+  const evalData: CommonTypes[] = [
     0,
     1,
     2,
@@ -35,21 +36,24 @@ export default async function testBase(computer: Computer) {
   for (let i = 0; i < evalData.length; i++) {
     const data = evalData[i];
     computer
-      .get('arg[1]', data)
+      .eval('return arg[1]', data)
       .then((out) => {
         if (_.isEqual(out[0], data))
           console.log(`Passed computer eval test #${i}!`);
-        else console.error(`Failed computer eval test #${i}...`);
+        else console.error(`Failed computer eval test #${i}... `, out);
       })
       .catch(console.error);
   }
 
   // CALLBACK TESTING
-  const cb = () => ['Hello World!'];
+  const cb: NetworkedCallback = () => ['Hello World!'];
   computer
-    .callback(cb)
-    .then((cbId) => computer.get(cbId.pointer))
-    .then((rCbId) => computer.runCallback(String(rCbId[0])))
+    .eval('return arg[1]', cb)
+    .then((out) => {
+      const fn = out[0];
+      if (typeof fn == 'function') return fn();
+      else return '';
+    })
     .then((cbOut) => {
       if (_.isEqual(cbOut, cb())) console.log('Passed computer callback test!');
       else console.error('Failed computer callback test...');
@@ -114,7 +118,7 @@ export default async function testBase(computer: Computer) {
     .read(
       undefined,
       ['success', 'failure'],
-      async (partial) => {
+      (partial) => {
         console.log(`Computer read requested auto-fill for "${partial}"!`);
         const autoFill = ['success', 'failure'];
         const prompt = autoFill.filter((s) => s.startsWith(partial));

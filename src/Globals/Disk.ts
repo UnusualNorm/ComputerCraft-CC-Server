@@ -1,19 +1,17 @@
 import Global from './Base';
-import { Side } from '../Interfaces/CCLua';
+import { Side } from '../Types/ComputerCraft';
 
 class Disk extends Global {
   async isPresent(name: Side) {
-    const out = await this.computer
+    return this.computer
       .run(`disk.isPresent`, name)
-      .then((out: [boolean]) => out);
-    return out[0];
+      .then((out: [boolean]) => out[0]);
   }
 
   async getLabel(name: Side) {
-    const out = await this.computer
+    return this.computer
       .run(`disk.getLabel`, name)
-      .then((out: [string]) => out);
-    return out[0];
+      .then((out: [string]) => out[0]);
   }
 
   async setLabel(name: Side, label: string) {
@@ -22,31 +20,27 @@ class Disk extends Global {
   }
 
   async hasData(name: Side) {
-    const out = await this.computer
+    return this.computer
       .run(`disk.hasData`, name)
-      .then((out: [boolean]) => out);
-    return out[0];
+      .then((out: [boolean]) => out[0]);
   }
 
   async getMountPath(name: Side) {
-    const out = await this.computer
+    return this.computer
       .run(`disk.getMountPath`, name)
-      .then((out: [string]) => out);
-    return out[0];
+      .then((out: [string]) => out[0]);
   }
 
   async hasAudio(name: Side) {
-    const out = await this.computer
+    return this.computer
       .run(`disk.hasAudio`, name)
-      .then((out: [boolean]) => out);
-    return out[0];
+      .then((out: [boolean]) => out[0]);
   }
 
   async getAudioTitle(name: Side) {
-    const out = await this.computer
+    return this.computer
       .run(`disk.getAudioTitle`, name)
-      .then((out: [string | boolean]) => out);
-    return out[0];
+      .then((out: [string | boolean]) => out[0]);
   }
 
   async playAudio(name: Side) {
@@ -65,10 +59,9 @@ class Disk extends Global {
   }
 
   async getID(name: Side) {
-    const out = await this.computer
+    return this.computer
       .run(`disk.getID`, name)
-      .then((out: [string]) => out);
-    return out[0];
+      .then((out: [string]) => out[0]);
   }
 }
 
