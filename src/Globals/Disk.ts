@@ -1,7 +1,7 @@
 import { Side } from '../ComputerCraft';
 import { Global } from './Base';
 
-class Disk extends Global {
+export class Disk extends Global {
   readonly id = 'disk';
 
   async isPresent(name: Side): Promise<boolean> {
@@ -67,4 +67,3 @@ class Disk extends Global {
   }
 }
 
-export { Disk };

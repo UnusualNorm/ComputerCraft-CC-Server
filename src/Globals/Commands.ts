@@ -1,7 +1,7 @@
 import { BlockInfo, Coordinate } from '../ComputerCraft';
 import { Global } from './Base';
 
-class Commands extends Global {
+export class Commands extends Global {
   readonly id = 'commands';
 
   async exec(command: string): Promise<{
@@ -78,5 +78,3 @@ class Commands extends Global {
       .then((out: [BlockInfo]) => out[0]);
   }
 }
-
-export { Commands };

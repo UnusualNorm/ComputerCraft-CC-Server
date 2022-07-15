@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import ws from 'ws';
 import { CommonType, Side } from './ComputerCraft';
-import { FSNetworkedType } from './Globals';
+import { FSNetworkedType, HTTPNetworkedType } from './Globals';
 
 export interface ComputerEvents {
   /**
@@ -138,7 +138,8 @@ export type NetworkedType =
   | NetworkedCallback
   | NetworkedType[]
   | { [x: string]: NetworkedType }
-  | FSNetworkedType;
+  | FSNetworkedType
+  | HTTPNetworkedType;
 
 export type NetworkInput =
   | ['eval', string, boolean, CommonType[], FunctionMask[]]
@@ -161,17 +162,17 @@ export interface Computer {
 export class Computer extends EventEmitter {
   socket: ws.WebSocket;
 
-  readonly _HOST: Promise<string>;
+  async _HOST(): Promise<string> {
+    return this.get(`_HOST`).then((out: [string]) => out[0]);
+  }
 
-  readonly _CC_DEFAULT_SETTINGS: Promise<string>;
+  async _CC_DEFAULT_SETTINGS(): Promise<string> {
+    return this.get(`_CC_DEFAULT_SETTINGS`).then((out: [string]) => out[0]);
+  }
 
   constructor(socket: ws.WebSocket) {
     super();
     this.socket = socket;
-    this._HOST = this.get(`_HOST`).then((out: [string]) => out[0]);
-    this._CC_DEFAULT_SETTINGS = this.get(`_CC_DEFAULT_SETTINGS`).then(
-      (out: [string]) => out[0]
-    );
 
     socket.on('message', async (rawMessageData) => {
       const rawMessage = rawMessageData.toString();

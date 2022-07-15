@@ -7,7 +7,7 @@ export interface ReadHandle {
   close(): Promise<void>;
 }
 
-interface RawReadHandle {
+export interface RawReadHandle {
   readLine(withTrailing?: boolean): Promise<[null | string]>;
   readAll(): Promise<[null | string]>;
   read(count: number): Promise<[string | null]>;
@@ -22,7 +22,7 @@ export interface BinaryReadHandle {
   seek(whence?: 'set' | 'cur' | 'end', offset?: number): Promise<number>;
 }
 
-interface RawBinaryReadHandle {
+export interface RawBinaryReadHandle {
   read(count: number): Promise<[null | number | string]>;
   readAll(): Promise<[string | null]>;
   readLine(withTrailing?: boolean): Promise<[string | null]>;
@@ -40,7 +40,7 @@ export interface WriteHandle {
   close(): Promise<void>;
 }
 
-interface RawWriteHandle {
+export interface RawWriteHandle {
   write(value: string): Promise<[void]>;
   writeLine(value: string): Promise<[void]>;
   flush(): Promise<[void]>;
@@ -54,7 +54,7 @@ export interface BinaryWriteHandle {
   seek(whence?: 'set' | 'cur' | 'end', offset?: number): Promise<number>;
 }
 
-interface RawBinaryWriteHandle {
+export interface RawBinaryWriteHandle {
   write(arg: number | string): Promise<[void]>;
   flush(): Promise<[void]>;
   close(): Promise<[void]>;
@@ -119,7 +119,7 @@ export type FSNetworkedType =
   | RawBinaryWriteHandle
   | FileAttributes;
 
-class FS extends Global {
+export class FS extends Global {
   readonly id = 'fs';
 
   async isDriveRoot(path: string): Promise<boolean> {
@@ -301,5 +301,3 @@ class FS extends Global {
       .then((out: [FileAttributes]) => out[0]);
   }
 }
-
-export { FS };

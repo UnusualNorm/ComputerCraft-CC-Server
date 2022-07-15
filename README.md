@@ -56,7 +56,7 @@ const port = 3000;
 const server = new Server();
 
 server.on('connection', async (computer) => {
-  console.log(`New connection from ${await computer._HOST}!`);
+  console.log(`New connection from ${await computer._HOST()}!`);
   // "New connection from ComputerCraft XX.XX.XX (Minecraft XX.XX)"
   await computer.print(`Hello from NodeJS ${process.version}!`);
   // "Hello from NodeJS vXX.XX.XX!"

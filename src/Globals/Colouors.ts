@@ -6,7 +6,7 @@ type RGB = {
   b: number;
 };
 
-class Colouors extends Global {
+export class Colouors extends Global {
   readonly white = 0x1;
   readonly orange = 0x2;
   readonly magenta = 0x4;
@@ -76,5 +76,3 @@ class Colouors extends Global {
       .then((out: [string]) => out[0]);
   }
 }
-
-export { Colouors };
