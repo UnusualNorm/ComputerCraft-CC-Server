@@ -1,6 +1,5 @@
-import { CommonTypes, Computer } from '../src';
+import { CommonType, Computer, NetworkedCallback } from '../src';
 import _ from 'underscore';
-import { NetworkedCallback } from '../src/Types/Computer';
 
 export default async function (computer: Computer) {
   // _HOST TESTING
@@ -14,7 +13,7 @@ export default async function (computer: Computer) {
     .catch(console.error);
 
   // EVAL TESTING
-  const evalData: CommonTypes[] = [
+  const evalData: CommonType[] = [
     0,
     1,
     2,

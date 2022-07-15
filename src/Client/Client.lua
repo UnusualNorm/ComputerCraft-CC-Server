@@ -270,13 +270,14 @@ while true do
 
 		if requestType == 'callback' then
 			local subcommand = table.remove(message, 1)
-			if subcommand == 'create' then
-				local nonce, id = table.unpack(message)
-				_G.RemoteCallbacks[id] = _G.RemoteCallback(id)
-				_G.Socket.send(
-					textutils.serialiseJSON({ 'callback', 'res', nonce })
-				)
-			elseif subcommand == 'req' then
+			-- if subcommand == 'create' then
+			-- 	local nonce, id = table.unpack(message)
+			-- 	_G.RemoteCallbacks[id] = _G.RemoteCallback(id)
+			-- 	_G.Socket.send(
+			-- 		textutils.serialiseJSON({ 'callback', 'res', nonce })
+			-- 	)
+			-- elseif subcommand == 'req' then
+			if subcommand == 'req' then
 				local nonce, id, arg, mask = table.unpack(message)
 				local callback = _G.Callbacks[id]
 				if callback then

@@ -1,5 +1,4 @@
-export * from './Server';
+export * from './ComputerCraft';
 export * from './Computer';
-export * from './Servers';
+export * from './Server';
 export * from './Globals';
-export * from './Types';

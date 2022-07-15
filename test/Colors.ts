@@ -61,11 +61,15 @@ export default async function (computer: Computer) {
     .rgb8(0xb23399)
     .then((rgb8Out) => {
       if (typeof rgb8Out == 'number')
-        return console.error('Failed color rgb8 hex->rgb test type check...');
+        return console.error('Failed color rgb8 hex -> rgb test type check...');
 
-      if (rgb8Out.r === 0.69803921568627 && rgb8Out.g === 0.2 && rgb8Out.b === 0.6)
-        console.log('Passed color rgb8 hex->rgb test!');
-      else console.error('Failed color rgb8 hex->rgb test...');
+      if (
+        rgb8Out.r === 0.69803921568627 &&
+        rgb8Out.g === 0.2 &&
+        rgb8Out.b === 0.6
+      )
+        console.log('Passed color rgb8 hex -> rgb test!');
+      else console.error('Failed color rgb8 hex -> rgb test...');
     })
     .catch(console.error);
 
@@ -73,10 +77,10 @@ export default async function (computer: Computer) {
     .rgb8(0.7, 0.2, 0.6)
     .then((rgb8Out) => {
       if (typeof rgb8Out == 'object')
-        return console.error('Failed color rgb8 rgb->hex test type check...');
+        return console.error('Failed color rgb8 rgb -> hex test type check...');
 
-      if (rgb8Out === 0xb23399) console.log('Passed color rgb8 rgb->hex test!');
-      else console.error('Failed color rgb8 rgb->hex test...');
+      if (rgb8Out === 0xb23399) console.log('Passed color rgb8 rgb -> hex test!');
+      else console.error('Failed color rgb8 rgb -> hex test...');
     })
     .catch(console.error);
 

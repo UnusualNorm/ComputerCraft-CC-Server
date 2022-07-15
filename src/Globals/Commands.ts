@@ -1,25 +1,14 @@
+import { BlockInfo, Coordinate } from '../ComputerCraft';
 import { Global } from './Base';
-import { Computer } from '../Computer';
-import { BlockInfo } from '../Types';
-
-class AsyncCommands extends Global {
-  readonly id = 'commands.async';
-}
 
 class Commands extends Global {
   readonly id = 'commands';
 
-  constructor(Computer: Computer) {
-    super(Computer);
-    this.async = new AsyncCommands(Computer);
-  }
-
-  public native: null;
-  public async: AsyncCommands;
-
-  async exec(
-    command: string
-  ): Promise<{ success: boolean; output: string[]; affected: number }> {
+  async exec(command: string): Promise<{
+    success: boolean;
+    output: string[];
+    affected: number | null;
+  }> {
     return this.computer
       .run(`commands.exec`, command)
       .then((out: [boolean, string[], number | null]) => ({
@@ -29,19 +18,21 @@ class Commands extends Global {
       }));
   }
 
-  async execAsync(command: string) {
+  async execAsync(command: string): Promise<number> {
     return this.computer
       .run(`commands.execAsync`, command)
       .then((out: [number]) => out[0]);
   }
 
-  async list(...commands: string[]): Promise<string[]> {
+  async list(...arg: string[]): Promise<string[]> {
     return this.computer
-      .eval(`commands.list`, ...commands)
-      .then((out: [string[]]) => out[0]);
+      .eval(`commands.list`, ...arg)
+      .then((out: [string[] | Record<string, never>]) =>
+        Array.isArray(out[0]) ? out[0] : []
+      );
   }
 
-  async getBlockPosition() {
+  async getBlockPosition(): Promise<Coordinate> {
     return this.computer
       .run('commands.getBlockPosition')
       .then((out: [number, number, number]) => ({
@@ -59,7 +50,7 @@ class Commands extends Global {
     maxY: number,
     maxZ: number,
     dimension?: string
-  ) {
+  ): Promise<BlockInfo[]> {
     return this.computer
       .run(
         `commands.getBlockInfos`,
@@ -71,10 +62,17 @@ class Commands extends Global {
         maxZ,
         dimension
       )
-      .then((out: [BlockInfo[]]) => out[0]);
+      .then((out: [BlockInfo[] | Record<string, never>]) =>
+        Array.isArray(out[0]) ? out[0] : []
+      );
   }
 
-  async getBlockInfo(x: number, y: number, z: number, dimension?: string) {
+  async getBlockInfo(
+    x: number,
+    y: number,
+    z: number,
+    dimension?: string
+  ): Promise<BlockInfo> {
     return this.computer
       .run(`commands.getBlockInfos`, x, y, z, dimension)
       .then((out: [BlockInfo]) => out[0]);

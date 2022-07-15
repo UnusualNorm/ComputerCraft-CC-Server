@@ -1,6 +1,7 @@
-import { Server as CCServer } from '../src/index';
+import { Server as CCServer } from '../src';
 import testComputer from './Computer';
-import testColor from './Color';
+import testColors from './Colors';
+import testFS from './FS';
 
 const port = 3000;
 const server = new CCServer();
@@ -8,7 +9,8 @@ const server = new CCServer();
 server.on('connection', (computer) => {
   console.log('Computer has connected!');
   testComputer(computer);
-  testColor(computer);
+  testColors(computer);
+  testFS(computer);
 });
 
 server.listen(port);

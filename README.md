@@ -1,7 +1,7 @@
-# @unnusualnorm/computercraft-cc-server
+# computercraft-server
 
-A Node.js package providing a command and control server for ComputerCraft computers in Minecraft.
-Allowing control over these in game computers (like turtles!) with Node.js using WebSockets.
+A Node.js package providing a low-level command and control server for ComputerCraft computers in Minecraft.
+Allowing control over these in game computers with Node.js instead of Lua.
 
 Thank you wwaaijer for the [base and inspiration](https://github.com/wwaaijer/cc-socket-server) for this project!
 
@@ -9,7 +9,7 @@ Thank you wwaaijer for the [base and inspiration](https://github.com/wwaaijer/cc
 
 ## Disclaimer
 
-This project is currently NOT uploaded to NPM because it is entirely UNFINISHED, do not use it unless you are okay with manually typing lua, or you are developing.
+This project is currently NOT uploaded to NPM because it is entirely UNFINISHED, do not use it unless you are okay with some missing Peripherals and Global wrappers.
 
 If you are, please disreguard the "Install the package" step and manually install it using git:
 
@@ -24,27 +24,18 @@ This project is meant to be used with the `CC:Tweaked` Minecraft mod:
 - [https://github.com/SquidDev-CC/CC-Tweaked](https://github.com/SquidDev-CC/CC-Tweaked)
 - [https://tweaked.cc/](https://tweaked.cc/)
 
-This package provides/is going to provide:
+This package provides provides:
 
-- An HTTP server serving the lua script.
-- A simple wrapper for cc: tweaked api's. (globals, peripherals, etc...)
-- Modded Peripheral support.
-- An easy to use event system for the server and computers.
-- An easy way to send raw lua commands to a computer.
-
-## To Do
-
-- Add more events to ther server and computer
-- Setup Peripheral and Global support
-- Callback support for parameters
-- Add more cached details
+- An HTTP server serving the lua script and handling connections
+- A simple wrapper for CC: Tweaked api's. (globals, peripherals, etc...)
+- Easy and low-level management of ComputerCraft computers
 
 ## Known Issues
 
-- If the server disconnects during an operation, the client crashes
-- Arrays and objects are not supported for print() and printError()
-- Colors/Colours API is inneficiently requesting operations through the computer
-- computer.close() is broken
+- If the server disconnects, the client crashes, this isn't a big deal
+- Not all globals are currently wrapped
+- No peripherals have been wrapped
+- No JSDoc for any function
 
 # Usage
 
@@ -53,21 +44,22 @@ This package provides/is going to provide:
 Install the package:
 
 ```
-npm install @unnusualnorm/computercraft-cc-server
+npm install computercraft-cc-server
 ```
 
 Create a file, `server.js`, with the content:
 
 ```js
-const { Server } = require('@unnusualnorm/computercraft-cc-server');
+const { Server } = require('computercraft-server');
 
 const port = 3000;
 const server = new Server();
 
 server.on('connection', async (computer) => {
-  await computer.init;
-  await computer.print('Hello World!');
-  await computer.close();
+  console.log(`New connection from ${await computer._HOST}!`);
+  // "New connection from ComputerCraft XX.XX.XX (Minecraft XX.XX)"
+  await computer.print(`Hello from NodeJS ${process.version}!`);
+  // "Hello from NodeJS vXX.XX.XX!"
 });
 
 server.listen(port);
@@ -82,11 +74,7 @@ node server.js
 
 ## Allow your ComputerCraft computers to connect to your server
 
-Before you hop into a Minecraft world you want to make sure ComputerCraft is setup to allow connections to the correct address.
-As this is meant as a proof of concept project I assume the following setup:
-
-- Server running on your own PC/laptop
-- Minecraft single player world running on the same PC/laptop
+Before you hop into a Minecraft world. You want to make sure ComputerCraft allows connections to the correct address.
 
 To make this work you'll need to allow connections to your localhost as described here:
 [Allowing access to local IPs](https://github.com/SquidDev-CC/CC-Tweaked/wiki/Allowing-access-to-local-IPs)
@@ -106,7 +94,7 @@ From then on your javascript code will have control of the ComputerCraft compute
 ![alt text](./computer-run-example.png)
 
 > If you see `Domain not permitted`, your ComputerCraft configuration is not correct yet.
-> Make sure you complete the step above, "Allow your ComputerCraft computers to connect to your server".
+> Make sure you complete the step, "Allow your ComputerCraft computers to connect to your server".
 
 ## Working with return values
 
@@ -118,13 +106,11 @@ The first value will state if a block was detected.
 The second value will contain the block that it detected.
 
 ```js
-const { turtle } = computer.globals;
+const turtle = new Turtle(computer);
 const { success, details } = await turtle.inspect();
 
 console.log('Inspection successful:', success);
 console.log('Inspection details:', details);
-
-await computer.close();
 ```
 
 Output:
@@ -145,12 +131,11 @@ Inspection details: {
 Or, for when a movement command of a turtle fails like the `turtle.down()` command:
 
 ```js
+const turtle = new Turtle(computer);
 const { success, details } = await turtle.down();
 
 console.log('Move successful:', successful);
 console.log('Move details:', details);
-
-await computer.close();
 ```
 
 The output would be:
