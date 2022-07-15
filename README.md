@@ -44,7 +44,7 @@ This package provides provides:
 Install the package:
 
 ```
-npm install computercraft-cc-server
+npm install computercraft-server
 ```
 
 Create a file, `server.js`, with the content:
