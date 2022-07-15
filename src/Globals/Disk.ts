@@ -1,7 +1,9 @@
-import Global from './Base';
-import { Side } from '../Types/ComputerCraft';
+import { Global } from './Base';
+import { Side } from '../Types';
 
 class Disk extends Global {
+  readonly id = 'disk';
+
   async isPresent(name: Side) {
     return this.computer
       .run(`disk.isPresent`, name)
@@ -11,7 +13,7 @@ class Disk extends Global {
   async getLabel(name: Side) {
     return this.computer
       .run(`disk.getLabel`, name)
-      .then((out: [string]) => out[0]);
+      .then((out: [string | null]) => out[0]);
   }
 
   async setLabel(name: Side, label: string) {
@@ -28,7 +30,7 @@ class Disk extends Global {
   async getMountPath(name: Side) {
     return this.computer
       .run(`disk.getMountPath`, name)
-      .then((out: [string]) => out[0]);
+      .then((out: [string | null]) => out[0]);
   }
 
   async hasAudio(name: Side) {
@@ -40,7 +42,7 @@ class Disk extends Global {
   async getAudioTitle(name: Side) {
     return this.computer
       .run(`disk.getAudioTitle`, name)
-      .then((out: [string | boolean]) => out[0]);
+      .then((out: [string | boolean | null]) => out[0]);
   }
 
   async playAudio(name: Side) {
@@ -61,8 +63,8 @@ class Disk extends Global {
   async getID(name: Side) {
     return this.computer
       .run(`disk.getID`, name)
-      .then((out: [string]) => out[0]);
+      .then((out: [string | null]) => out[0]);
   }
 }
 
-export default Disk;
+export { Disk };

@@ -141,7 +141,7 @@ function _G.PackTable(Table)
 		elseif type(value) == 'function' then
 			local cbId = table.unique(_G.Callbacks)
 			_G.Callbacks[cbId] = value
-			
+
 			data[i] = cbId
 			mask[i] = true
 			_G.Socket.send(
@@ -163,7 +163,7 @@ end
 
 function _G.UnpackTable(Table, Mask)
 	local data = {}
-	
+
 	for i, value in pairs(Table) do
 		if value == textutils.json_null then
 			data[i] = nil
@@ -175,7 +175,7 @@ function _G.UnpackTable(Table, Mask)
 			data[i] = value
 		end
 	end
-	
+
 	return data
 end
 

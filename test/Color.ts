@@ -1,8 +1,8 @@
 import { Computer, Colors } from '../src';
 
-export default async function testColor(computer: Computer) {
+export default async function (computer: Computer) {
   const colors = new Colors(computer);
-  if (!(await colors.exists()))
+  if (!(await colors.isLoaded()))
     return console.warn('Color module not found, unable to test.');
 
   // COMBINE TESTING
@@ -32,5 +32,60 @@ export default async function testColor(computer: Computer) {
     })
     .catch(console.error);
 
-  return console.log('Finished color testing!');
+  // PACKRGB TESTING
+  colors
+    .packRGB(0.7, 0.2, 0.6)
+    .then((packRGBOut) => {
+      if (packRGBOut === 0xb23399) console.log('Passed color packRGB test!');
+      else console.error('Failed color packRGB test...');
+    })
+    .catch(console.error);
+
+  // UNPACKRGB TESTING
+  colors
+    .unpackRGB(0xb23399)
+    .then((unpackRGBOut) => {
+      if (
+        // WTF is this?
+        unpackRGBOut.r === 0.69803921568627 &&
+        unpackRGBOut.g === 0.2 &&
+        unpackRGBOut.b === 0.6
+      )
+        console.log('Passed color unpackRGB test!');
+      else console.error('Failed color unpackRGB test...');
+    })
+    .catch(console.error);
+
+  // RGB8 TESTING
+  colors
+    .rgb8(0xb23399)
+    .then((rgb8Out) => {
+      if (typeof rgb8Out == 'number')
+        return console.error('Failed color rgb8 hex->rgb test type check...');
+
+      if (rgb8Out.r === 0.69803921568627 && rgb8Out.g === 0.2 && rgb8Out.b === 0.6)
+        console.log('Passed color rgb8 hex->rgb test!');
+      else console.error('Failed color rgb8 hex->rgb test...');
+    })
+    .catch(console.error);
+
+  colors
+    .rgb8(0.7, 0.2, 0.6)
+    .then((rgb8Out) => {
+      if (typeof rgb8Out == 'object')
+        return console.error('Failed color rgb8 rgb->hex test type check...');
+
+      if (rgb8Out === 0xb23399) console.log('Passed color rgb8 rgb->hex test!');
+      else console.error('Failed color rgb8 rgb->hex test...');
+    })
+    .catch(console.error);
+
+  // TOBLIT TESTING
+  colors
+    .toBlit(0xb23399)
+    .then((toBlitOut) => {
+      if (toBlitOut == '17') console.log('Passed color toBlit test!');
+      else console.error('Failed color toBlit test...');
+    })
+    .catch(console.error);
 }

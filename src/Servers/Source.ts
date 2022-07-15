@@ -12,29 +12,40 @@ function attachClientSource(server: http.Server, path = '/') {
   });
 }
 
-function attachClientUpdater(server: http.Server, sourcePath = '/', path = '/updater') {
+function attachClientStartup(
+  server: http.Server,
+  sourcePath = '/',
+  path = '/startup'
+) {
   server.on('request', (request, response) => {
     if (request.url == path) {
-      const updaterSource = buildUpdaterSource(`${request.headers.host}${sourcePath}`);
+      const startupSource = buildStartupSource(
+        `${request.headers.host}${sourcePath}`
+      );
       response.writeHead(200);
-      response.end(updaterSource, 'utf-8');
+      response.end(startupSource, 'utf-8');
     }
   });
 }
 
 const sourcePath = path.join(__dirname, '../Client/Client.lua');
-const updaterPath = path.join(__dirname, '../Client/Updater.lua');
+const startupPath = path.join(__dirname, '../Client/Startup.lua');
 const clientSource = fs.readFileSync(sourcePath, { encoding: 'utf-8' });
-const updaterSource = fs.readFileSync(updaterPath, { encoding: 'utf-8' });
+const startupSource = fs.readFileSync(startupPath, { encoding: 'utf-8' });
 
 function buildClientSource(host: string) {
   const connectionVariableDefinition = `_G.ConnectionURL = "${host}"`;
   return `${connectionVariableDefinition}\n${clientSource}`;
 }
 
-function buildUpdaterSource(source: string) {
-  const connectionVariableDefinition = `_G.ConnectionURL = "http://${source}"`;
-  return `${connectionVariableDefinition}\n${updaterSource}`;
+function buildStartupSource(source: string) {
+  const connectionVariableDefinition = `_G.SourceURL = "http://${source}"`;
+  return `${connectionVariableDefinition}\n${startupSource}`;
 }
 
-export { attachClientSource, attachClientUpdater, buildClientSource, buildUpdaterSource };
+export {
+  attachClientSource,
+  attachClientStartup,
+  buildClientSource,
+  buildStartupSource,
+};

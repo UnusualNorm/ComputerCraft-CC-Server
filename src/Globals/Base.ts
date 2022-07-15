@@ -1,6 +1,6 @@
-import Computer from '../Computer';
+import { Computer } from '../Computer';
 
-export default class GlobalBase {
+export class Global {
   readonly computer: Computer;
   readonly id: string;
 
@@ -8,7 +8,7 @@ export default class GlobalBase {
     this.computer = computer;
   }
 
-  async exists() {
+  async isLoaded() {
     return this.computer
       .eval(`if ${this.id} then return true else return false end`)
       .then((out: [boolean]) => out[0]);

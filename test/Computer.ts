@@ -2,7 +2,7 @@ import { CommonTypes, Computer } from '../src';
 import _ from 'underscore';
 import { NetworkedCallback } from '../src/Types/Computer';
 
-export default async function testBase(computer: Computer) {
+export default async function (computer: Computer) {
   // _HOST TESTING
   computer._HOST
     .then((host) => console.log('Computer _HOST:', host))
@@ -137,6 +137,4 @@ export default async function testBase(computer: Computer) {
       else console.error('Failed computer read test...');
     })
     .catch(console.error);
-
-  return console.log('Finished computer testing!');
 }

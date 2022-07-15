@@ -1,12 +1,12 @@
 import EventEmitter from 'events';
 import ws from 'ws';
 import {
+  CommonTypes,
   FunctionMask,
   NetworkedCallback,
   NetworkedTypes,
-  NetworkOutputs,
-} from './Types/Computer';
-import { CommonTypes } from './Types/ComputerCraft';
+  NetworkInputs,
+} from './Types';
 
 class Computer extends EventEmitter implements Computer {
   socket: ws.WebSocket;
@@ -31,7 +31,7 @@ class Computer extends EventEmitter implements Computer {
 
     socket.on('message', async (rawMessageData) => {
       const rawMessage = rawMessageData.toString();
-      const message: NetworkOutputs = JSON.parse(rawMessage);
+      const message: NetworkInputs = JSON.parse(rawMessage);
 
       switch (message[0]) {
         case 'eval': {
@@ -110,23 +110,12 @@ class Computer extends EventEmitter implements Computer {
         else reject(output[0]);
       });
 
-      this.socket.send(
-        JSON.stringify([
-          'eval',
-          nonce,
-          code,
-          values,
-          mask,
-        ])
-      );
+      this.socket.send(JSON.stringify(['eval', nonce, code, values, mask]));
     });
   }
 
   run(func: string, ...arg: NetworkedTypes[]) {
-    return this.rawEval(
-      `return ${func}`,
-      ...arg
-    );
+    return this.rawEval(`return ${func}`, ...arg);
   }
   get(val: string) {
     return this.eval(`return ${val}`);
@@ -148,12 +137,7 @@ class Computer extends EventEmitter implements Computer {
       const callbackId = this.#generateNonce(this.#callbacks);
 
       this.socket.send(
-        JSON.stringify([
-          'callback',
-          'create',
-          nonce,
-          callbackId,
-        ])
+        JSON.stringify(['callback', 'create', nonce, callbackId])
       );
 
       this.#callbackRequests.set(nonce, () => resolve(callbackId));
@@ -163,8 +147,8 @@ class Computer extends EventEmitter implements Computer {
 
   async #packArrayValues(
     data: NetworkedTypes[]
-  ): Promise<[NetworkedTypes[], FunctionMask[]]> {
-    const values: NetworkedTypes[] = [];
+  ): Promise<[CommonTypes[], FunctionMask[]]> {
+    const values: CommonTypes[] = [];
     const mask: FunctionMask[] = [];
 
     for (const item of data) {
@@ -190,9 +174,10 @@ class Computer extends EventEmitter implements Computer {
   }
 
   async #packObjectValues(
-    data: Record<string, NetworkedTypes>
-  ): Promise<[Record<string, NetworkedTypes>, Record<string, FunctionMask>]> {
-    const values: Record<string, NetworkedTypes> = {};
+    // TODO: Determine a type that also allows for packaging of global types
+    data: unknown
+  ): Promise<[Record<string, CommonTypes>, Record<string, FunctionMask>]> {
+    const values: Record<string, CommonTypes> = {};
     const mask: Record<string, FunctionMask> = {};
 
     for (const [key, value] of Object.entries(data)) {
@@ -221,8 +206,8 @@ class Computer extends EventEmitter implements Computer {
   }
 
   #unpackArrayValues(
-    data: CommonTypes[]|Record<string, never>,
-    mask: FunctionMask[]|Record<string, never>
+    data: CommonTypes[] | Record<string, never>,
+    mask: FunctionMask[] | Record<string, never>
   ): NetworkedTypes[] {
     if (!Array.isArray(data)) data = [];
     if (!Array.isArray(mask)) mask = [];
@@ -379,4 +364,4 @@ class Computer extends EventEmitter implements Computer {
   }
 }
 
-export default Computer;
+export { Computer };

@@ -1,5 +1,5 @@
-import { ValueOf } from '.';
 import { CommonTypes, Side } from './ComputerCraft';
+import { FSGlobalNewtworkedTypes } from './Globals';
 
 export interface ComputerEvents {
   /**
@@ -122,8 +122,7 @@ export interface ComputerEvents {
   turtle_inventory: () => unknown;
 }
 
-export type ComputerEventValues = Parameters<ValueOf<ComputerEvents>>;
-export interface Computer {
+export interface ComputerEventEmitter {
   on<U extends keyof ComputerEvents>(
     event: U,
     listener: ComputerEvents[U]
@@ -135,11 +134,6 @@ export interface Computer {
   ): boolean;
 }
 
-export type NetworkedTypes =
-  | CommonTypes
-  | NetworkedCallback
-  | NetworkedTypes[]
-  | { [x: string]: NetworkedTypes };
 export type NetworkedCallback = (
   ...args: NetworkedTypes[]
 ) => NetworkedTypes[] | Promise<NetworkedTypes[]>;
@@ -149,37 +143,15 @@ export type FunctionMask =
   | FunctionMask[]
   | { [x: string]: FunctionMask };
 
-export type NetworkEvalOutput = [
-  'eval',
-  string,
-  boolean,
-  CommonTypes[],
-  FunctionMask[]
-];
-export type NetworkCallbackReqOutput = [
-  'callback',
-  'req',
-  string,
-  string,
-  CommonTypes[],
-  FunctionMask[]
-];
-export type NetworkCallbackResOutput = [
-  'callback',
-  'res',
-  string,
-  CommonTypes[],
-  FunctionMask[]
-];
-export type NetworkCallbackEventOutput = [
-  'event',
-  string,
-  CommonTypes[],
-  FunctionMask[]
-];
+export type NetworkedTypes =
+  | CommonTypes
+  | NetworkedCallback
+  | NetworkedTypes[]
+  | { [x: string]: NetworkedTypes }
+  | FSGlobalNewtworkedTypes;
 
-export type NetworkOutputs =
-  | NetworkEvalOutput
-  | NetworkCallbackReqOutput
-  | NetworkCallbackResOutput
-  | NetworkCallbackEventOutput;
+export type NetworkInputs =
+  | ['eval', string, boolean, CommonTypes[], FunctionMask[]]
+  | ['callback', 'req', string, string, CommonTypes[], FunctionMask[]]
+  | ['callback', 'res', string, CommonTypes[], FunctionMask[]]
+  | ['event', string, CommonTypes[], FunctionMask[]];

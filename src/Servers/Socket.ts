@@ -1,6 +1,6 @@
 import { WebSocketServer as WSServer } from 'ws';
-import Computer from '../Computer';
-import Server from '../Server';
+import { Computer } from '../Computer';
+import { Server } from '../Server';
 
 class SocketServer {
   server: Server;
@@ -17,4 +17,4 @@ class SocketServer {
   }
 }
 
-export default SocketServer;
+export { SocketServer };

@@ -1,6 +1,23 @@
-import Global from './Base';
+import { Global } from './Base';
+import {
+  BinaryReadHandle,
+  BinaryWriteHandle,
+  FileAttributes,
+  FSInterface,
+  isBinaryHandle,
+  isReadHandle,
+  isWriteHandle,
+  RawBinaryReadHandle,
+  RawBinaryWriteHandle,
+  RawReadHandle,
+  RawWriteHandle,
+  ReadHandle,
+  WriteHandle,
+} from '../Types';
 
-class FS extends Global {
+class FS extends Global implements FSInterface {
+  readonly id = 'fs';
+
   async isDriveRoot(path: string) {
     return this.computer
       .run(`fs.isDriveRoot`, path)
@@ -19,10 +36,156 @@ class FS extends Global {
   }
 
   async list(path: string) {
+    return this.computer.run(`fs.list`, path).then((out: [string[]]) => out[0]);
+  }
+
+  async combine(path: string, ...paths: string[]) {
     return this.computer
-      .run(`fs.list`, path)
-      .then((out: [string[]]) => out[0]);
+      .run(`fs.combine`, path, ...paths)
+      .then((out: [string]) => out[0]);
+  }
+
+  async getName(path: string) {
+    return this.computer
+      .run(`fs.getName`, path)
+      .then((out: [string]) => out[0]);
+  }
+
+  async getDir(path: string) {
+    return this.computer.run(`fs.getDir`, path).then((out: [string]) => out[0]);
+  }
+
+  async getSize(path: string) {
+    return this.computer
+      .run(`fs.getSize`, path)
+      .then((out: [number]) => out[0]);
+  }
+
+  async exists(path: string) {
+    return this.computer
+      .run(`fs.exists`, path)
+      .then((out: [boolean]) => out[0]);
+  }
+
+  async isDir(path: string) {
+    return this.computer.run(`fs.isDir`, path).then((out: [boolean]) => out[0]);
+  }
+
+  async isReadOnly(path: string) {
+    return this.computer
+      .run(`fs.isReadOnly`, path)
+      .then((out: [boolean]) => out[0]);
+  }
+
+  async makeDir(path: string) {
+    await this.computer.run(`fs.makeDir`, path);
+    return;
+  }
+
+  async move(path: string, dest: string) {
+    await this.computer.run(`fs.move`, path, dest);
+    return;
+  }
+
+  async copy(path: string, dest: string) {
+    await this.computer.run(`fs.copy`, path, dest);
+    return;
+  }
+
+  async delete(path: string) {
+    await this.computer.run(`fs.delete`, path);
+    return;
+  }
+
+  async open(
+    path: string,
+    mode: 'r' | 'rb' | 'w' | 'wb' | 'a' | 'ab'
+  ): Promise<ReadHandle | WriteHandle | BinaryReadHandle | BinaryWriteHandle> {
+    return this.computer
+      .run(`fs.open`, path, mode)
+      .then(
+        (
+          out: [
+            | RawReadHandle
+            | RawWriteHandle
+            | RawBinaryReadHandle
+            | RawBinaryWriteHandle
+          ]
+        ) => {
+          const rawHandle = out[0];
+          if (isReadHandle(rawHandle) && !isBinaryHandle(rawHandle)) {
+            const handle: ReadHandle = {
+              readLine: async (withTrailing?) =>
+                (await rawHandle.readLine(withTrailing))[0],
+              readAll: async () => (await rawHandle.readAll())[0],
+              read: async (count) => (await rawHandle.read(count))[0],
+              close: async () => (await rawHandle.close())[0],
+            };
+
+            return handle;
+          } else if (isWriteHandle(rawHandle) && !isBinaryHandle(rawHandle)) {
+            const handle: WriteHandle = {
+              write: async (data) => (await rawHandle.write(data))[0],
+              writeLine: async (line) => (await rawHandle.writeLine(line))[0],
+              flush: async () => (await rawHandle.flush())[0],
+              close: async () => (await rawHandle.close())[0],
+            };
+
+            return handle;
+          } else if (isReadHandle(rawHandle) && isBinaryHandle(rawHandle)) {
+            const handle: BinaryReadHandle = {
+              read: async (count?) => (await rawHandle.read(count))[0],
+              readAll: async () => (await rawHandle.readAll())[0],
+              readLine: async (withTrailing?) =>
+                (await rawHandle.readLine(withTrailing))[0],
+              close: async () => (await rawHandle.close())[0],
+              seek: async (whence, offset) =>
+                (await rawHandle.seek(whence, offset))[0],
+            };
+
+            return handle;
+          } else if (isWriteHandle(rawHandle) && isBinaryHandle(rawHandle)) {
+            const handle: BinaryWriteHandle = {
+              write: async (data) => (await rawHandle.write(data))[0],
+              flush: async () => (await rawHandle.flush())[0],
+              close: async () => (await rawHandle.close())[0],
+              seek: async (whence, offset) =>
+                (await rawHandle.seek(whence, offset))[0],
+            };
+
+            return handle;
+          }
+        }
+      );
+  }
+
+  async getDrive(path: string) {
+    return this.computer
+      .run(`fs.getDrive`, path)
+      .then((out: [string]) => out[0]);
+  }
+
+  async getFreeSpace(path: string) {
+    return this.computer
+      .run(`fs.getFreeSpace`, path)
+      .then((out: [number | 'unlimited']) => out[0]);
+  }
+
+  async find(path: string) {
+    return this.computer.run(`fs.find`, path).then((out: [string[]]) => out[0]);
+  }
+
+  async getCapacity(path: string) {
+    return this.computer
+      .run(`fs.getCapacity`, path)
+      .then((out: [number | null]) => out[0]);
+  }
+
+  async attributes(path: string) {
+    return this.computer
+      .run(`fs.attributes`, path)
+      .then((out: [FileAttributes]) => out[0]);
   }
 }
 
-export default FS;
+export { FS };
