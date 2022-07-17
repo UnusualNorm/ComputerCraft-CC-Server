@@ -7,8 +7,13 @@ export type CommonType =
   | null;
 export type Side = 'top' | 'bottom' | 'left' | 'right' | 'front' | 'back';
 
-// TODO: Create block info type
-export type BlockInfo = Record<string, CommonType>;
+// TODO: Determine all available states and tags...
+export type BlockInfo = {
+  state: Record<string, boolean>;
+  name: string;
+  tags: Record<string, boolean>;
+};
+
 export type ItemInfo = {
   name: string;
   count: number;

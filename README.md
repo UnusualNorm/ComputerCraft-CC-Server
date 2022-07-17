@@ -56,10 +56,9 @@ const port = 3000;
 const server = new Server();
 
 server.on('connection', async (computer) => {
-  console.log(`New connection from ${await computer._HOST()}!`);
-  // "New connection from ComputerCraft XX.XX.XX (Minecraft XX.XX)"
-  await computer.print(`Hello from NodeJS ${process.version}!`);
-  // "Hello from NodeJS vXX.XX.XX!"
+  console.log('Computer has connected!');
+  await computer.print(`Hello World!`);
+  await computer.close();
 });
 
 server.listen(port);
@@ -107,7 +106,7 @@ The second value will contain the block that it detected.
 
 ```js
 const turtle = new Turtle(computer);
-const { success, details } = await turtle.inspect();
+const [success, details] = await turtle.inspect();
 
 console.log('Inspection successful:', success);
 console.log('Inspection details:', details);
@@ -132,7 +131,7 @@ Or, for when a movement command of a turtle fails like the `turtle.down()` comma
 
 ```js
 const turtle = new Turtle(computer);
-const { success, details } = await turtle.down();
+const [success, details] = await turtle.down();
 
 console.log('Move successful:', successful);
 console.log('Move details:', details);

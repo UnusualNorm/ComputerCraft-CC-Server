@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import ws from 'ws';
+import { WebSocket } from 'ws';
 import { CommonType, Side } from './ComputerCraft';
 import { FSNetworkedType, HTTPNetworkedType } from './Globals';
 
@@ -160,7 +160,7 @@ export interface Computer {
 }
 
 export class Computer extends EventEmitter {
-  socket: ws.WebSocket;
+  socket: WebSocket;
 
   async _HOST(): Promise<string> {
     return this.get(`_HOST`).then((out: [string]) => out[0]);
@@ -170,7 +170,7 @@ export class Computer extends EventEmitter {
     return this.get(`_CC_DEFAULT_SETTINGS`).then((out: [string]) => out[0]);
   }
 
-  constructor(socket: ws.WebSocket) {
+  constructor(socket: WebSocket) {
     super();
     this.socket = socket;
 
@@ -265,6 +265,12 @@ export class Computer extends EventEmitter {
   get(val: string, ...arg: NetworkedType[]) {
     return this.eval(`return ${val}`, ...arg);
   }
+
+  // Why does this need to be an arrow function?
+  close = (): Promise<void> => {
+    this.socket.send(JSON.stringify(['close']));
+    return new Promise<void>((resolve) => this.socket.on('close', resolve));
+  };
 
   #remoteCallback(callbackId: string) {
     return (...arg: NetworkedType[]) => {

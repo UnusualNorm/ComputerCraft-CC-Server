@@ -266,17 +266,8 @@ while true do
 					})
 				)
 			end, _G.EventCollector)
-		end
-
-		if requestType == 'callback' then
+		elseif requestType == 'callback' then
 			local subcommand = table.remove(message, 1)
-			-- if subcommand == 'create' then
-			-- 	local nonce, id = table.unpack(message)
-			-- 	_G.RemoteCallbacks[id] = _G.RemoteCallback(id)
-			-- 	_G.Socket.send(
-			-- 		textutils.serialiseJSON({ 'callback', 'res', nonce })
-			-- 	)
-			-- elseif subcommand == 'req' then
 			if subcommand == 'req' then
 				local nonce, id, arg, mask = table.unpack(message)
 				local callback = _G.Callbacks[id]
@@ -295,6 +286,9 @@ while true do
 					)
 				end
 			end
+		elseif requestType == 'close' then
+			_G.Socket.close()
+			break
 		end
 	else
 		local output, outputMask = _G.PackTable(event)
