@@ -61,6 +61,8 @@ export class Colouors extends Global {
       }));
   }
 
+  rgb8(r: number, g: number, b: number): Promise<number>;
+  rgb8(rgb: number): Promise<RGB>;
   async rgb8(...arg: [number, number?, number?]): Promise<number | RGB> {
     return this.computer
       .run(`colors.rgb8`, ...arg)

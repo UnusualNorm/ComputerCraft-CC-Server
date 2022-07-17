@@ -59,6 +59,19 @@ export class HTTP extends Global {
     return;
   }
 
+  get(request: string, headers?: Record<string, string>): Promise<Response>;
+  get(
+    request: string,
+    headers: Record<string, string>,
+    binary: true
+  ): Promise<BinaryResponse>;
+  get(request: BaseRequest): Promise<Response>;
+  get(
+    request: BaseRequest & {
+      binary: true;
+    }
+  ): Promise<BinaryResponse>;
+
   async get(
     request: string | BaseRequest,
     headers?: Record<string, string>,
@@ -102,9 +115,32 @@ export class HTTP extends Global {
       });
   }
 
+  post(
+    request: string,
+    body: string,
+    headers?: Record<string, string>,
+    binary?: false | null
+  ): Promise<Response>;
+  post(
+    request: string,
+    body: string,
+    headers?: Record<string, string>,
+    binary?: true
+  ): Promise<BinaryResponse>;
+  post(
+    request: Request & {
+      binary?: false | null;
+    }
+  ): Promise<Response>;
+  post(
+    request: Request & {
+      binary?: true;
+    }
+  ): Promise<BinaryResponse>;
+
   async post(
     request: string | Request,
-    body: string,
+    body?: string,
     headers?: Record<string, string>,
     binary?: boolean
   ): Promise<Response | BinaryResponse> {
@@ -170,22 +206,22 @@ export class HTTP extends Global {
       }));
   }
 
-//   TODO: Implement allowance for multiple websocket connections
-//   async websocket(
-//     url: string,
-//     headers?: Record<string, string>
-//   ): Promise<Websocket> {
-//     return this.computer
-//       .run(`http.websocket`, url, headers)
-//       .then();
-//   }
-//
-//   async websocketAsync(
-//     url: string,
-//     headers?: Record<string, string>
-//   ): Promise<Websocket> {
-//     return this.computer
-//       .run(`http.websocket`, url, headers)
-//       .then();
-//   }
+  //   TODO: Implement allowance for multiple websocket connections
+  //   async websocket(
+  //     url: string,
+  //     headers?: Record<string, string>
+  //   ): Promise<Websocket> {
+  //     return this.computer
+  //       .run(`http.websocket`, url, headers)
+  //       .then();
+  //   }
+  //
+  //   async websocketAsync(
+  //     url: string,
+  //     headers?: Record<string, string>
+  //   ): Promise<Websocket> {
+  //     return this.computer
+  //       .run(`http.websocket`, url, headers)
+  //       .then();
+  //   }
 }

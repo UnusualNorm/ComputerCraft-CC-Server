@@ -207,6 +207,10 @@ export class FS extends Global {
     return;
   }
 
+  open(path: string, mode: 'r'): Promise<ReadHandle>;
+  open(path: string, mode: 'rb'): Promise<BinaryReadHandle>;
+  open(path: string, mode: 'w' | 'a'): Promise<WriteHandle>;
+  open(path: string, mode: 'wb' | 'ab'): Promise<BinaryWriteHandle>;
   async open(
     path: string,
     mode: 'r' | 'rb' | 'w' | 'wb' | 'a' | 'ab'

@@ -3,12 +3,14 @@ import _ from 'underscore';
 
 export default async function (computer: Computer) {
   // _HOST TESTING
-  computer._HOST
+  computer
+    ._HOST()
     .then((host) => console.log('Computer _HOST:', host))
     .catch(console.error);
 
   // _CC_DEFAULT_SETTINGS
-  computer._CC_DEFAULT_SETTINGS
+  computer
+    ._CC_DEFAULT_SETTINGS()
     .then((settings) => console.log('Computer _CC_DEFAULT_SETTINGS:', settings))
     .catch(console.error);
 

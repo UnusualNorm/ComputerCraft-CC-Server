@@ -9,7 +9,7 @@ import {
 export default async function (computer: Computer) {
   const fs = new FS(computer);
   if (!(await fs.isLoaded()))
-    return console.warn('Color module not found, unable to test.');
+    return console.warn('FS module not found, unable to test.');
 
-  // TODO: Implement tests for FS.
+  // TODO: Implement tests for FS module
 }
